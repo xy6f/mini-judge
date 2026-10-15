@@ -1,6 +1,6 @@
 > Spring Cloud 2023 微服务（gateway + user/problem/judge 三服务）｜ JDK 17 ｜ Vue 3 前端（前后端分离）
 
-**简历项目二**：OJ 题材常见，但 95% 的学生只做"题库 CRUD"那半边——本项目的重心是**评测引擎**：如何安全、公正、不阻塞地在服务器上运行完全不可信的陌生人代码。
+**设计目标**：市面上的 OJ 实现大多停留在"题库 CRUD"，本项目的重心是**评测引擎**——如何安全、公正、不阻塞地在服务器上运行完全不可信的陌生人代码。
 
 **功能速览**：提交→DB 队列 CAS 领取→worker 池（信号量=核数）→沙箱执行（docker 五层护栏 / simulate 本机开发模式）→逐用例判分 AC/WA/TLE/MLE/RE/CE→WebSocket 实时推送；RBAC 收口（rejudge/建题需 ADMIN）；Watchdog 孤儿恢复；`/api/judge/status` 监控指标供运维消费。
 
@@ -16,7 +16,7 @@ done
 cd frontend && npm install && npm run dev   # http://localhost:5174
 ```
 
-**面试问答索引**：沙箱五层护栏→`SandboxRunner.buildCommand`；并发模型→`JudgeWorkerPool`（信号量/异常分层/finally 归还）；队列选型→`SubmissionMapper`（CAS 领取，DB 队列→MQ 演进）；可靠性→`JudgeDispatcher.recoverOrphans`（幂等重判）；RBAC→`SubmissionService.isAdmin`（fail-closed）。
+**设计要点索引**：沙箱五层护栏→`SandboxRunner.buildCommand`；并发模型→`JudgeWorkerPool`（信号量/异常分层/finally 归还）；队列选型→`SubmissionMapper`（CAS 领取，DB 队列→MQ 演进）；可靠性→`JudgeDispatcher.recoverOrphans`（幂等重判）；RBAC→`SubmissionService.isAdmin`（fail-closed）。
 
 ---
 
