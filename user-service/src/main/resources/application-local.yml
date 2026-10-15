@@ -1,0 +1,11 @@
+# user-service 本地开发 profile（local）：关闭 Nacos，无注册中心也能独立启动。
+# 说明（面试点）：注册中心只影响"别人怎么找到我"，不影响业务功能本身——
+# 关掉它，HTTP 端口、DB、JWT 全部照常，这就是能做"环境无关冒烟"的底气；
+# 代价是网关无法用服务名发现本服务，需网关 local profile 直写 localhost:8101。
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+    discovery:
+      enabled: false

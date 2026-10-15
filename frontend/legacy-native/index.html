@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mini-judge · 评测控制台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b5cf6' d='M12 2 3 7v10l9 5 9-5V7z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+
+<!-- ══════════════ 顶栏 ══════════════ -->
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-logo" viewBox="0 0 24 24" fill="none" stroke="url(#bgrad)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <defs><linearGradient id="bgrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#22d3ee"/>
+      </linearGradient></defs>
+      <path d="M12 2 3 7v10l9 5 9-5V7z"/>
+      <path d="M8.5 10.5 6.5 12l2 1.5M15.5 10.5 17.5 12l-2 1.5M13.5 9.5l-3 5"/>
+    </svg>
+    <span class="brand-name">mini-judge</span>
+    <span class="brand-sep">·</span>
+    <span class="brand-sub">评测控制台</span>
+  </div>
+  <div class="topbar-right">
+    <span id="apiBaseChip" class="api-chip" title="当前 API 入口（网关 8085 或直连端口）"></span>
+    <!-- 身份徽章：未登录时可点击展开登录面板 -->
+    <div class="identity-wrap">
+      <button id="identityBtn" class="identity hidden-logined">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>
+        </svg>
+        <span id="identityText">登录</span>
+      </button>
+      <div id="identityMenu" class="popover hidden">
+        <p id="identityInfo" class="pop-title"></p>
+        <button id="logoutBtn" class="pop-item danger">退出登录</button>
+      </div>
+    </div>
+    <button id="logToggleBtn" class="ghost-btn" title="API 调用日志">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M4 12h10M4 18h7"/><circle cx="19" cy="16" r="3"/><path d="m21.4 18.4 1.6 1.6"/>
+      </svg>
+      <span>API 日志</span>
+      <span id="logCount" class="log-count">0</span>
+    </button>
+  </div>
+</header>
+
+<!-- ══════════════ 登录 / 注册浮层 ══════════════ -->
+<div id="loginPop" class="login-pop hidden">
+  <h3>登录 mini-judge</h3>
+  <label>用户名
+    <input id="loginUser" type="text" autocomplete="username" placeholder="如 demo">
+  </label>
+  <label>密码
+    <input id="loginPass" type="password" autocomplete="current-password" placeholder="至少 6 位">
+  </label>
+  <label>昵称 <small>（仅注册新账号时使用）</small>
+    <input id="loginNick" type="text" placeholder="可选">
+  </label>
+  <div class="login-actions">
+    <button id="loginDoBtn" class="btn primary">登录</button>
+    <button id="registerDoBtn" class="btn ghost">注册并登录</button>
+  </div>
+  <p class="login-hint">网关白名单只放行 <code>/api/auth/**</code>，其余接口登录后自动携带 Bearer 令牌。</p>
+</div>
+
+<!-- ══════════════ 左导航 ══════════════ -->
+<nav class="sidenav">
+  <button class="nav-btn active" data-page="problems">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>
+    </svg><span>题库</span>
+  </button>
+  <button class="nav-btn" data-page="submit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m10 13-5 5 2 2 5-5M14 6l5-5 5 5-5 5"/>
+      <path d="M9 14a5 5 0 0 1 7 0M15 10a5 5 0 0 1-7 0"/>
+      <path d="m12 17 5 5 5-5"/>
+    </svg><span>提交</span>
+  </button>
+  <button class="nav-btn" data-page="monitor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12h4l3-8 4 16 3-8h6"/>
+    </svg><span>监控</span>
+  </button>
+</nav>
+
+<!-- ══════════════ 主内容 ══════════════ -->
+<main class="content">
+
+  <!-- ── 题库页 ── -->
+  <section id="page-problems" class="page active">
+    <div class="page-head">
+      <div>
+        <h2>题库</h2>
+        <p class="page-desc">已发布题目一览 · 选择难度过滤，点击卡片进入提交</p>
+      </div>
+      <button id="demoInitBtn" class="btn gradient">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5z"/>
+        </svg>
+        一键初始化演示题（A+B）
+      </button>
+    </div>
+    <div class="filter-row" id="diffFilter">
+      <button class="chip active" data-diff="">全部</button>
+      <button class="chip" data-diff="EASY"><i class="dot easy"></i>EASY</button>
+      <button class="chip" data-diff="MEDIUM"><i class="dot medium"></i>MEDIUM</button>
+      <button class="chip" data-diff="HARD"><i class="dot hard"></i>HARD</button>
+      <button id="refreshProblemsBtn" class="chip icon" title="刷新题单">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/>
+        </svg>
+      </button>
+    </div>
+    <div id="problemGrid" class="problem-grid"></div>
+    <div id="problemEmpty" class="empty hidden">
+      <p>还没有可做的题。</p>
+      <p class="muted">点击右上角「一键初始化演示题」：自动注册 demo 账号 → 登录 → 建 A+B 题 → 上传两组测试用例，一条链路全部打通。</p>
+    </div>
+  </section>
+
+  <!-- ── 提交页 ── -->
+  <section id="page-submit" class="page">
+    <div class="submit-grid">
+
+      <div class="card editor-card">
+        <div class="card-head">
+          <h3>代码编辑</h3>
+          <span class="muted mono" id="codeMeta">0 字符</span>
+        </div>
+        <div class="editor-tools">
+          <select id="problemSelect" class="select" title="选择题目"></select>
+          <select id="langSelect" class="select" title="语言">
+            <option value="JAVA17">Java 17</option>
+          </select>
+        </div>
+        <div class="sample-row">
+          <span class="sample-label">示例代码：</span>
+          <button class="chip tiny ok" data-sample="ac">正确解 → AC</button>
+          <button class="chip tiny warn" data-sample="tle">死循环 → TLE</button>
+          <button class="chip tiny err" data-sample="ce">语法错误 → CE</button>
+        </div>
+        <div class="editor" id="editorBox">
+          <div class="line-gutter" id="lineGutter"><div>1</div></div>
+          <textarea id="codeInput" class="code-area" spellcheck="false" autocomplete="off"
+            placeholder="在此粘贴 / 编写 Java 代码（public class Main，从标准输入读，向标准输出写）"></textarea>
+        </div>
+        <div class="editor-foot">
+          <button id="submitBtn" class="btn gradient wide">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m5 12 5 5L21 6"/>
+            </svg>
+            提交评测
+          </button>
+          <span id="submitHint" class="muted">提交接口秒回：只入队，评测在后台 worker 异步完成</span>
+        </div>
+      </div>
+
+      <div class="result-col">
+        <div class="card timeline-card">
+          <div class="card-head"><h3>评测进度</h3><span class="mono muted" id="subIdLabel">—</span></div>
+          <ol class="timeline" id="timeline">
+            <li data-step="QUEUED">
+              <i class="tl-dot"></i>
+              <div><b>QUEUED</b><span>已入队，等待 worker 领取</span></div>
+            </li>
+            <li data-step="RUNNING">
+              <i class="tl-dot"></i>
+              <div><b>RUNNING</b><span>沙箱编译并逐用例评测中</span></div>
+            </li>
+            <li data-step="DONE">
+              <i class="tl-dot"></i>
+              <div><b>DONE</b><span>判定完成</span></div>
+            </li>
+          </ol>
+          <div id="resultPanel" class="result-panel hidden">
+            <div class="verdict-row">
+              <span id="bigBadge" class="big-badge">AC</span>
+              <div class="verdict-stats">
+                <p><span class="stat-num mono" id="passedText">0/0</span> 通过用例</p>
+                <p class="mono" id="usedText">— ms · — KB</p>
+              </div>
+            </div>
+            <pre id="errBox" class="err-box hidden"></pre>
+          </div>
+        </div>
+
+        <div class="card history-card">
+          <div class="card-head">
+            <h3>提交历史</h3>
+            <button id="refreshHistoryBtn" class="chip icon" title="刷新历史">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/>
+              </svg>
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table class="hist-table">
+              <thead><tr><th>#</th><th>题目</th><th>结果</th><th>通过</th><th>耗时</th><th>提交时间</th></tr></thead>
+              <tbody id="histBody"></tbody>
+            </table>
+            <p id="histEmpty" class="muted center hidden">暂无提交记录</p>
+          </div>
+          <p class="muted tip">点击任意行可回看该次提交的源码（载入左侧编辑器）</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 监控页 ── -->
+  <section id="page-monitor" class="page">
+    <div class="page-head">
+      <div>
+        <h2>评测机监控</h2>
+        <p class="page-desc">每 3s 轮询 <code class="mono">GET /api/judge/status</code>，观察队列深度与 worker 忙闲</p>
+      </div>
+      <span class="live-dot" title="轮询进行中"><i></i>LIVE</span>
+    </div>
+    <div class="metric-row">
+      <div class="card metric">
+        <p class="metric-label">排队 QUEUED</p>
+        <p class="metric-num mono" id="mQueued">0</p>
+      </div>
+      <div class="card metric">
+        <p class="metric-label">评测中 RUNNING</p>
+        <p class="metric-num mono" id="mRunning">0</p>
+      </div>
+      <div class="card gauge-card">
+        <p class="metric-label">Worker 忙 / 容量</p>
+        <div class="gauge">
+          <svg viewBox="0 0 120 120" class="gauge-svg">
+            <circle class="gauge-bg" cx="60" cy="60" r="52"/>
+            <circle class="gauge-val" id="gaugeArc" cx="60" cy="60" r="52"/>
+          </svg>
+          <div class="gauge-text"><b class="mono" id="mBusy">0</b><span class="mono" id="mCap">/0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card spark-card">
+      <div class="card-head">
+        <h3>队列采样曲线</h3>
+        <span class="legend"><i class="lg lg-q"></i>排队</span>
+        <span class="legend"><i class="lg lg-r"></i>评测中</span>
+      </div>
+      <svg id="spark" class="spark" viewBox="0 0 640 120" preserveAspectRatio="none"></svg>
+      <p class="muted tip">保留最近 40 次采样；提交几条死循环代码，就能亲眼看到队列爬坡、worker 饱和。</p>
+    </div>
+  </section>
+</main>
+
+<!-- ══════════════ API 日志抽屉 ══════════════ -->
+<aside id="apiDrawer" class="drawer hidden">
+  <div class="drawer-head">
+    <h3>API 调用日志</h3>
+    <div>
+      <button id="logClearBtn" class="chip tiny">清空</button>
+      <button id="logCloseBtn" class="chip tiny">收起</button>
+    </div>
+  </div>
+  <div id="logList" class="log-list"></div>
+</aside>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

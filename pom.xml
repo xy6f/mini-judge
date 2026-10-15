@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  mini-judge（在线代码评测平台）—— 多模块父工程（计划书第 4 章服务划分）
+  模块：judge-common 公共件 / gateway 网关 / user-service / problem-service / judge-service(核心)
+  版本矩阵（面试可讲选型依据）：Boot 3.3.x + Spring Cloud 2023.0.x + Alibaba 2023.0.1.x，JDK 17
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.5</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.minijudge</groupId>
+  <artifactId>mini-judge</artifactId>
+  <version>0.1.0</version>
+  <packaging>pom</packaging>
+  <!-- 聚合四个子模块，reactor 按依赖顺序构建 -->
+  <modules>
+    <module>judge-common</module>
+    <module>gateway</module>
+    <module>user-service</module>
+    <module>problem-service</module>
+    <module>judge-service</module>
+  </modules>
+
+  <properties>
+    <java.version>17</java.version>
+    <spring-cloud.version>2023.0.4</spring-cloud.version>
+    <spring-cloud-alibaba.version>2023.0.1.2</spring-cloud-alibaba.version>
+    <mybatis-plus.version>3.5.9</mybatis-plus.version>
+    <jjwt.version>0.11.5</jjwt.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Spring Cloud BOM：只管版本不引依赖 -->
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Spring Cloud Alibaba BOM：Nacos 注册/配置中心 -->
+      <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+        <version>${spring-cloud-alibaba.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- 版本修复（本机实测踩坑）：Spring Cloud 2023.0.4 BOM 管理的网关 4.1.6 是按
+           spring-web 6.2 编译的（ForwardedHeadersFilter 调用 HttpHeaders 的 headerSet 方法），
+           与 Boot 3.3.5 所带 spring-web 6.1.14 二进制不兼容——任何转发请求在网关侧
+           抛 NoSuchMethodError 直接断连（冒烟第一步即复现）。这里把网关两个构件显式
+           钉到 4.1.5（2023.0.x 列车中仍按 6.1.x 编译的版本）。dependencyManagement 里
+           直接声明优先于 import 的 BOM，仅锁定版本、不新增任何依赖。 -->
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+        <version>4.1.5</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-gateway-server</artifactId>
+        <version>4.1.5</version>
+      </dependency>
+      <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+        <version>${mybatis-plus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-jsqlparser</artifactId>
+        <version>${mybatis-plus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <!-- 内部公共模块也统一纳管版本 -->
+      <dependency>
+        <groupId>com.minijudge</groupId>
+        <artifactId>judge-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

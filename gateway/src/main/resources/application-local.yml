@@ -1,0 +1,51 @@
+# gateway 本地开发 profile（local）：不依赖 Nacos 也能起全链路。
+#
+# 目标与原理：
+# 1. spring.cloud.nacos.discovery.enabled=false —— 关闭 Nacos 自动注册/配置类装配
+#    （NacosServiceRegistryAutoConfiguration 等都挂了这个开关），不会尝试连 8848；
+# 2. spring.cloud.discovery.enabled=false —— 再关一层 Spring Cloud 通用发现抽象，
+#    防止 @EnableDiscoveryClient 相关的 DiscoveryClient 装配在没有注册中心时报错；
+#    两个开关缺一不可，这是"环境无关化冒烟"验证过的组合；
+# 3. 路由 uri 从 lb://服务名 改为直写 http://localhost:810x —— lb:// 需要
+#    LoadBalancer+Discovery 解析实例列表，关掉发现后必须换成固定地址。
+#    注意：生产绝不用本文件——生产路由走 lb://，实例上下线由 Nacos 自动感知。
+# local 端口 8085：本机 8080 已被其他进程占用，独立前端默认 API_BASE 即指向这里
+# （基线 application.yml 的 globalcors 属另一个 key，profile 覆盖 routes 不影响它，CORS 照常生效）
+server:
+  port: 8085
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+    discovery:
+      enabled: false
+    gateway:
+      routes:
+        # 覆盖基线配置的全部路由（profile 文件里同 key 的 list 是整体替换而非合并）
+        - id: user-service
+          uri: http://localhost:8101
+          predicates:
+            - Path=/api/auth/**,/api/users/**
+        - id: problem-service
+          uri: http://localhost:8102
+          predicates:
+            - Path=/api/problems/**
+        - id: judge-service
+          uri: http://localhost:8103
+          predicates:
+            - Path=/api/submissions/**,/api/judge/**
+        # WebSocket 直连本地 judge-service
+        - id: judge-ws
+          uri: ws://localhost:8103
+          predicates:
+            - Path=/ws/**
+
+# local profile 下用例路由拒绝演示的开关（见 LocalCaseDenyFilter）。
+# 真实生产：非样例用例数据绝不经网关对外——本 filter 只做"演示拦截"，
+# 服务间拉用例走 Feign 内网直连 problem-service（8102 不对外暴露端口），
+# 双保险=网关 deny + 网络隔离。置 false 可对比演示"放行后用例泄露"的坏例子。
+mini-judge:
+  gateway:
+    deny-cases-route: true

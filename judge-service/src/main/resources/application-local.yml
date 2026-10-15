@@ -1,0 +1,27 @@
+# judge-service 本地开发 profile（local）：无 Nacos、无 Docker 的"全链路冒烟"配置。
+#
+# 三个关键点（面试讲"如何优雅地降级依赖"）：
+# 1. 关发现：nacos.discovery.enabled=false + discovery.enabled=false 组合拳；
+# 2. Feign 降级直连：基线里 ProblemClient 的 url 是空占位符（走服务名负载均衡），
+#    local 下填入 http://localhost:8102 —— 同一份 @FeignClient 代码，
+#    url 占位符有值就直连、为空就走 lb://，两种环境零改码切换；
+# 3. 沙箱降级 simulate：本机 JDK 直接 javac/java 跑用户代码验证评测链路
+#    （无容器护栏，仅限开发演示，详见 SandboxRunner 注释）。
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+    discovery:
+      enabled: false
+
+mini-judge:
+  problem-service:
+    # Feign 直连地址（非 local 环境留空 => 走 problem-service 服务名发现）
+    url: http://localhost:8102
+  user-service:
+    # rejudge 角色现查直连 user-service（同一份占位符机制，见基线 application.yml）
+    url: http://localhost:8101
+  sandbox:
+    # simulate=本机 JDK 编译运行；docker=容器沙箱（生产默认，见基线 application.yml）
+    mode: simulate

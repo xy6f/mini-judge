@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mini-judge · 评测控制台</title>
+<style>
+/* ========== 设计令牌：深色 #0b1020 玻璃拟态，主渐变 violet→cyan ========== */
+:root {
+  --bg: #0b1020;
+  --bg-soft: #0e1530;
+  --panel: rgba(255, 255, 255, 0.045);
+  --panel-strong: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-hi: rgba(139, 92, 246, 0.45);
+  --text: #e6eaf5;
+  --text-dim: #8b93ab;
+  --violet: #8b5cf6;
+  --cyan: #22d3ee;
+  --grad: linear-gradient(90deg, var(--violet), var(--cyan));
+  --ac: #34d399;
+  --wa: #fbbf24;
+  --tle: #f87171;
+  --ce: #94a3b8;
+  --queued: #60a5fa;
+  --radius: 12px;
+  --mono: "Cascadia Code", "JetBrains Mono", Consolas, "Courier New", monospace;
+  --sans: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background:
+    radial-gradient(1100px 500px at 80% -10%, rgba(139, 92, 246, 0.14), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(34, 211, 238, 0.10), transparent 60%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========== 顶部品牌栏 ========== */
+header {
+  height: 58px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(11, 16, 32, 0.7);
+  backdrop-filter: blur(14px);
+}
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand .logo {
+  width: 26px; height: 26px; border-radius: 8px; align-self: center;
+  background: var(--grad);
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.55);
+}
+.brand h1 {
+  font-size: 17px; font-weight: 700; letter-spacing: 0.5px;
+  background: var(--grad);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.brand small { color: var(--text-dim); font-size: 12px; }
+.head-right { display: flex; align-items: center; gap: 12px; }
+.identity {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--panel);
+  font-size: 12.5px; transition: all 0.25s ease;
+}
+.identity .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ce); }
+.identity.on .dot { background: var(--ac); box-shadow: 0 0 8px var(--ac); }
+.identity .role {
+  font-size: 10.5px; padding: 1px 7px; border-radius: 999px;
+  background: rgba(139, 92, 246, 0.18); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+/* ========== 通用按钮 / 徽章 ========== */
+button {
+  font-family: inherit; font-size: 13px; color: var(--text);
+  border: 1px solid var(--border); background: var(--panel);
+  border-radius: 10px; padding: 8px 14px; cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+button:hover { background: var(--panel-strong); border-color: var(--border-hi); transform: translateY(-1px); }
+button:active { transform: translateY(0); }
+button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+button.primary {
+  background: var(--grad); border: none; color: #0b1020; font-weight: 700;
+  box-shadow: 0 4px 18px rgba(34, 211, 238, 0.25);
+}
+button.primary:hover { box-shadow: 0 6px 24px rgba(139, 92, 246, 0.45); }
+button.ghost { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  border: 1px solid transparent;
+}
+.badge.AC   { color: var(--ac);  background: rgba(52, 211, 153, 0.12);  border-color: rgba(52, 211, 153, 0.4); }
+.badge.WA   { color: var(--wa);  background: rgba(251, 191, 36, 0.12);  border-color: rgba(251, 191, 36, 0.4); }
+.badge.TLE  { color: var(--tle); background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); }
+.badge.MLE  { color: var(--tle); background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); }
+.badge.RE   { color: var(--tle); background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); }
+.badge.CE   { color: var(--ce);  background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.4); }
+.badge.QUEUED, .badge.RUNNING, .badge.REQUEUE {
+  color: var(--queued); background: rgba(96, 165, 250, 0.12); border-color: rgba(96, 165, 250, 0.4);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.45); opacity: 1; }
+  50%      { box-shadow: 0 0 0 7px rgba(96, 165, 250, 0); opacity: 0.75; }
+}
+
+/* ========== 主体：左导航 + 面板 ========== */
+.app { flex: 1; display: flex; min-height: 0; }
+nav {
+  flex: 0 0 176px; padding: 18px 12px; display: flex; flex-direction: column; gap: 6px;
+  border-right: 1px solid var(--border); background: rgba(255, 255, 255, 0.02);
+}
+nav .tab {
+  text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid transparent;
+  background: transparent; font-size: 13.5px; color: var(--text-dim);
+}
+nav .tab:hover { color: var(--text); background: var(--panel); }
+nav .tab.active {
+  color: var(--text); background: linear-gradient(90deg, rgba(139, 92, 246, 0.16), rgba(34, 211, 238, 0.10));
+  border-color: var(--border-hi);
+}
+main { flex: 1; overflow-y: auto; padding: 22px; }
+.panel-page { display: none; animation: fadeIn 0.25s ease; }
+.panel-page.show { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.page-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.card {
+  background: linear-gradient(160deg, rgba(139, 92, 246, 0.07), rgba(34, 211, 238, 0.045)), var(--panel);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); border-color: var(--border-hi); }
+
+/* ========== 题库页签 ========== */
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.chip { padding: 6px 14px; border-radius: 999px; font-size: 12.5px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text-dim); transition: all 0.2s ease; }
+.chip:hover { color: var(--text); }
+.chip.active { color: #0b1020; background: var(--grad); border-color: transparent; font-weight: 700; }
+.prob-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.prob-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.prob-card .top { display: flex; justify-content: space-between; align-items: center; }
+.prob-card .title { font-weight: 700; font-size: 14.5px; }
+.prob-card .meta { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--text-dim); }
+.diff-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.diff-dot.EASY { background: var(--ac); box-shadow: 0 0 8px rgba(52, 211, 153, 0.7); }
+.diff-dot.MEDIUM { background: var(--wa); box-shadow: 0 0 8px rgba(251, 191, 36, 0.7); }
+.diff-dot.HARD { background: var(--tle); box-shadow: 0 0 8px rgba(248, 113, 113, 0.7); }
+.tag { padding: 2px 8px; border-radius: 6px; background: var(--panel-strong); border: 1px solid var(--border); font-size: 11px; color: var(--text-dim); }
+.prob-desc { font-family: var(--mono); font-size: 12px; line-height: 1.55; color: var(--text-dim);
+  white-space: pre-wrap; max-height: 92px; overflow: hidden; }
+.empty { padding: 40px; text-align: center; color: var(--text-dim); border: 1px dashed var(--border); border-radius: var(--radius); }
+
+/* ========== 提交页签 ========== */
+.submit-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.editor-card, .result-card { padding: 16px; }
+.editor-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+select, input[type="text"], input[type="password"] {
+  font-family: inherit; font-size: 13px; color: var(--text);
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
+  outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+select:focus, input:focus { border-color: var(--border-hi); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18); }
+.code-wrap {
+  display: flex; border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--border); background: #0a0e1f;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.code-wrap.focus { border-color: var(--border-hi); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.16), 0 0 24px rgba(34, 211, 238, 0.10); }
+#gutter {
+  padding: 12px 0; text-align: right; user-select: none; overflow: hidden;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.55; color: #3d4664;
+  background: rgba(255, 255, 255, 0.02); border-right: 1px solid var(--border); min-width: 42px;
+}
+#gutter div { padding: 0 10px 0 12px; }
+#editor {
+  flex: 1; min-height: 340px; resize: vertical; border: none; outline: none; padding: 12px 14px;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.55; color: #d7deff;
+  background: transparent; white-space: pre; overflow: auto; tab-size: 4;
+}
+.editor-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 10px; flex-wrap: wrap; }
+.hint { font-size: 12px; color: var(--text-dim); }
+
+.timeline { display: flex; gap: 8px; align-items: center; margin: 14px 0; }
+.tl-step { flex: 1; text-align: center; padding: 9px 4px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  border: 1px dashed var(--border); color: var(--text-dim); transition: all 0.3s ease; }
+.tl-step.on { border-style: solid; color: var(--queued); border-color: rgba(96, 165, 250, 0.5); background: rgba(96, 165, 250, 0.10); animation: breathe 1.6s ease-in-out infinite; }
+.tl-step.done { color: var(--ac); border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.08); animation: none; }
+.result-hero { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--border); margin-bottom: 12px; flex-wrap: wrap; }
+.result-hero .big { font-size: 26px; font-weight: 800; letter-spacing: 1px; }
+.kv { font-size: 12.5px; color: var(--text-dim); }
+.kv b { color: var(--text); font-weight: 600; }
+.errbox { font-family: var(--mono); font-size: 11.5px; color: var(--tle); background: rgba(248, 113, 113, 0.07);
+  border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 8px; padding: 10px; margin-top: 10px;
+  white-space: pre-wrap; max-height: 120px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th { text-align: left; color: var(--text-dim); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+td { padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+tbody tr { cursor: pointer; transition: background 0.15s ease; }
+tbody tr:hover { background: var(--panel-strong); }
+.scrollbox { max-height: 300px; overflow-y: auto; }
+
+/* ========== 监控页签 ========== */
+.monitor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.gauge-card { padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.gauge-label { font-size: 12.5px; color: var(--text-dim); }
+.gauge-num { font-size: 18px; font-weight: 800; }
+.chart-card { padding: 18px; margin-bottom: 16px; }
+.chart-card h4 { font-size: 13px; color: var(--text-dim); font-weight: 600; margin-bottom: 10px; }
+.spark-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ========== API 日志抽屉 ========== */
+.log-drawer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: rgba(10, 14, 31, 0.92); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border); transform: translateY(calc(100% - 38px));
+  transition: transform 0.3s ease;
+}
+.log-drawer.open { transform: translateY(0); }
+.log-head { height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; cursor: pointer; }
+.log-head span { font-size: 12px; color: var(--text-dim); }
+.log-body { max-height: 220px; overflow-y: auto; padding: 0 16px 12px; font-family: var(--mono); font-size: 11.5px; }
+.log-line { padding: 3px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); color: var(--text-dim); display: flex; gap: 10px; }
+.log-line .m { color: var(--cyan); font-weight: 700; min-width: 44px; }
+.log-line .u { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-line.ok .s { color: var(--ac); }
+.log-line.err .s { color: var(--tle); }
+
+.toast {
+  position: fixed; top: 68px; right: 20px; z-index: 60; display: flex; flex-direction: column; gap: 8px;
+}
+.toast div { padding: 10px 16px; border-radius: 10px; font-size: 12.5px; border: 1px solid var(--border);
+  background: rgba(14, 21, 48, 0.95); animation: fadeIn 0.25s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.toast div.ok { border-color: rgba(52, 211, 153, 0.5); }
+.toast div.err { border-color: rgba(248, 113, 113, 0.5); }
+
+/* ========== 响应式 ========== */
+@media (max-width: 980px) {
+  .submit-layout, .spark-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .app { flex-direction: column; }
+  nav { flex-direction: row; flex: 0 0 auto; width: 100%; overflow-x: auto; padding: 8px; border-right: none; border-bottom: 1px solid var(--border); }
+  nav .tab { white-space: nowrap; }
+  main { padding: 14px; }
+  .brand small { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <h1>mini-judge · 评测控制台</h1>
+    <small>异步判题流水线的前端驾驶舱</small>
+  </div>
+  <div class="head-right">
+    <div class="identity" id="identity">
+      <span class="dot"></span>
+      <span id="identity-text">未登录（提交时自动使用演示账号）</span>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+  <nav>
+    <button class="tab active" data-page="problems">题库</button>
+    <button class="tab" data-page="submit">提交</button>
+    <button class="tab" data-page="monitor">评测机监控</button>
+  </nav>
+
+  <main>
+    <!-- ===================== 题库页签 ===================== -->
+    <section class="panel-page show" id="page-problems">
+      <div class="page-title">题库
+        <button class="primary ghost" id="btn-bootstrap" title="一键完成：注册演示账号 → 登录 → 建 A+B 题 → 上传 2 个测试用例">
+          ✦ 新建 A+B 示例题（一键初始化演示环境）
+        </button>
+        <button class="ghost" id="btn-refresh-problems">刷新</button>
+      </div>
+      <div class="toolbar" id="diff-filter">
+        <span class="chip active" data-diff="">全部</span>
+        <span class="chip" data-diff="EASY">EASY</span>
+        <span class="chip" data-diff="MEDIUM">MEDIUM</span>
+        <span class="chip" data-diff="HARD">HARD</span>
+      </div>
+      <div class="prob-grid" id="prob-grid"></div>
+    </section>
+
+    <!-- ===================== 提交页签 ===================== -->
+    <section class="panel-page" id="page-submit">
+      <div class="submit-layout">
+        <div class="card editor-card">
+          <div class="editor-head">
+            <select id="sel-problem" title="选择题目"></select>
+            <select id="sel-lang" title="语言">
+              <option value="JAVA17">Java 17（主类须为 Main）</option>
+            </select>
+            <select id="sel-sample" title="预置示例代码">
+              <option value="ac">示例：正确答案（AC）</option>
+              <option value="tle">示例：死循环（TLE）</option>
+              <option value="ce">示例：语法错误（CE）</option>
+            </select>
+          </div>
+          <div class="code-wrap" id="code-wrap">
+            <div id="gutter"></div>
+            <textarea id="editor" spellcheck="false"></textarea>
+          </div>
+          <div class="editor-foot">
+            <span class="hint">Ctrl+Enter 提交 · 行号随内容同步</span>
+            <button class="primary" id="btn-submit">提交评测</button>
+          </div>
+        </div>
+
+        <div class="card result-card">
+          <div class="page-title" style="margin-bottom:6px">运行结果</div>
+          <div class="timeline" id="timeline">
+            <div class="tl-step" data-s="QUEUED">QUEUED 排队</div>
+            <div class="tl-step" data-s="RUNNING">RUNNING 评测中</div>
+            <div class="tl-step" data-s="DONE">DONE 出结果</div>
+          </div>
+          <div class="result-hero" id="result-hero">
+            <span class="big" style="color:var(--text-dim)">—</span>
+            <span class="kv">尚未提交。选一道题，写（或直接挑一段示例）代码，点「提交评测」。</span>
+          </div>
+          <div id="result-err"></div>
+          <div class="page-title" style="margin:16px 0 6px;font-size:14px">历史提交
+            <button class="ghost" id="btn-refresh-history">刷新</button>
+          </div>
+          <div class="scrollbox">
+            <table>
+              <thead><tr><th>#</th><th>题目</th><th>状态</th><th>判定</th><th>用例</th><th>耗时</th><th>时间</th></tr></thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 监控页签 ===================== -->
+    <section class="panel-page" id="page-monitor">
+      <div class="page-title">评测机监控 <span class="hint">每 3 秒轮询 /api/judge/status</span></div>
+      <div class="monitor-grid">
+        <div class="card gauge-card">
+          <div class="gauge-num" id="g-queued-num" style="color:var(--queued)">0</div>
+          <svg width="120" height="120" viewBox="0 0 120 120" id="g-queued"></svg>
+          <div class="gauge-label">排队中 QUEUED</div>
+        </div>
+        <div class="card gauge-card">
+          <div class="gauge-num" id="g-running-num" style="color:var(--wa)">0</div>
+          <svg width="120" height="120" viewBox="0 0 120 120" id="g-running"></svg>
+          <div class="gauge-label">评测中 RUNNING</div>
+        </div>
+        <div class="card gauge-card">
+          <div class="gauge-num" id="g-worker-num" style="color:var(--cyan)">0 / 0</div>
+          <svg width="120" height="120" viewBox="0 0 120 120" id="g-worker"></svg>
+          <div class="gauge-label">Worker 占用 / 容量</div>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <h4>近 40 次采样：排队 / 运行 柱状历史</h4>
+        <svg width="100%" height="110" id="bars" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="spark-row">
+        <div class="card chart-card"><h4>queued sparkline</h4><svg width="100%" height="52" id="spark-q" preserveAspectRatio="none"></svg></div>
+        <div class="card chart-card"><h4>running sparkline</h4><svg width="100%" height="52" id="spark-r" preserveAspectRatio="none"></svg></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- API 日志抽屉 -->
+<div class="log-drawer" id="log-drawer">
+  <div class="log-head" id="log-head">
+    <span>▤ API 调用日志（<span id="log-count">0</span> 条）</span>
+    <span id="log-caret">▲ 展开</span>
+  </div>
+  <div class="log-body" id="log-body"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+ * mini-judge 评测控制台 —— 单文件、零依赖、零 CDN（离线可靠）。
+ *
+ * 【跨端口方案 A（当前采用）】
+ *   页面由 judge-service(8103) 的 classpath:/static 托管；判题接口与页面同源，
+ *   但 user-service(8101)/problem-service(8102) 与页面跨端口，两服务各加了一个
+ *   全局 CORS 配置类放行 http://localhost:8103（见各自 config/CorsConfig.java）。
+ *   生产部署统一走网关域名、前后端同源，不存在该问题，届时 CORS 类可整体删除。
+ *   方案 B（改走网关 8085）不采用：网关是 WebFlux，放行静态资源与重写路由都要动
+ *   网关配置，违反"后端只加 CORS"约束。
+ *   若以后改走网关，只需把下面 API_CONFIG 的 USER_API/PROBLEM_API/JUDGE_API
+ *   统一改成网关地址即可，页面代码零改动——这就是把它们做成常量的原因。
+ *
+ * 【实时性取舍】judge-service 已提供 WebSocket STOMP 端点 /ws/judge（ResultPushService
+ *   推送判题终态）。本控制台用 1s 轮询 GET /api/submissions/{id} 兜底即可，逻辑最简、
+ *   断线自愈。升级点：引入轻量 STOMP 客户端后，把 startPolling 的 setInterval 换成
+ *   订阅 /topic/submission/{id}，轮询降级为低频兜底（WS 断开时回退），即可完成
+ *   pull→push 演进，UI 其余部分不用动。监控页同理可推 worker 指标。
+ * ===================================================================== */
+const API_CONFIG = {
+  USER_API:    'http://localhost:8101', // user-service（注册/登录）
+  PROBLEM_API: 'http://localhost:8102', // problem-service（题单/建题/传用例）
+  JUDGE_API:   window.location.origin    // judge-service（提交/查结果/监控），页面即由它托管，同源
+};
+const DEMO_ACCOUNT = { username: 'demo_user', password: 'demo123456', nickname: '演示用户' };
+const POLL_SUBMIT_MS = 1000, POLL_SUBMIT_MAX = 180, POLL_MONITOR_MS = 3000;
+
+/* ---------- 工具 ---------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const now = () => new Date().toLocaleTimeString('zh-CN', { hour12: false });
+function toast(msg, ok = true) {
+  const d = document.createElement('div');
+  d.className = ok ? 'ok' : 'err'; d.textContent = msg;
+  $('toast').appendChild(d); setTimeout(() => d.remove(), 4200);
+}
+
+/* ---------- API 日志抽屉 ---------- */
+let logCount = 0;
+function apiLog(method, url, status, ok, ms) {
+  logCount++; $('log-count').textContent = logCount;
+  const line = document.createElement('div');
+  line.className = 'log-line ' + (ok ? 'ok' : 'err');
+  line.innerHTML = `<span class="m">${method}</span><span class="u">${esc(url)}</span>` +
+    `<span class="s">${status}</span><span>${ms}ms</span><span>${now()}</span>`;
+  $('log-body').prepend(line);
+  while ($('log-body').children.length > 200) $('log-body').lastChild.remove();
+}
+$('log-head').onclick = () => {
+  const open = $('log-drawer').classList.toggle('open');
+  $('log-caret').textContent = open ? '▼ 收起' : '▲ 展开';
+};
+
+/* ---------- 统一 fetch：解 Result{code,msg,data}，code!=0 视为业务失败 ---------- */
+async function call(method, url, body, headers = {}) {
+  const t0 = performance.now();
+  let resp, json;
+  try {
+    resp = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: body === undefined ? undefined : JSON.stringify(body)
+    });
+    json = await resp.json();
+  } catch (e) {
+    apiLog(method, url, 'NETWORK', false, Math.round(performance.now() - t0));
+    throw new Error(`网络不可达：${url}（${e.message}）——服务起了吗？`);
+  }
+  const ok = resp.ok && json.code === 0;
+  apiLog(method, url, ok ? json.code : (resp.status + '/' + json.code), ok, Math.round(performance.now() - t0));
+  if (!ok) throw new Error(`[${resp.status}/${json.code}] ${json.msg || '请求失败'}`);
+  return json.data;
+}
+
+/* ---------- 身份状态 ---------- */
+const me = { token: null, userId: null, nickname: null, role: null };
+function renderIdentity() {
+  const el = $('identity');
+  if (me.userId) {
+    el.classList.add('on');
+    el.innerHTML = `<span class="dot"></span><span>${esc(me.nickname)} · uid ${me.userId}</span>` +
+      `<span class="role">${esc(me.role || 'USER')}</span>` +
+      `<span class="hint">token ${me.token ? '✓' : '✗'}</span>`;
+  } else {
+    el.innerHTML = `<span class="dot"></span><span>未登录（提交时自动使用演示账号）</span>`;
+  }
+}
+/** 保证有演示身份：注册（撞唯一键就忽略）→ 登录拿 token/userId */
+async function ensureAuth() {
+  if (me.userId) return;
+  try {
+    await call('POST', API_CONFIG.USER_API + '/api/auth/register', DEMO_ACCOUNT);
+    apiLog('INFO', 'demo register ok', '-', true, 0);
+  } catch (e) {
+    if (!String(e.message).includes('40901')) throw e; // 用户名已占用属正常，直接走登录
+  }
+  const data = await call('POST', API_CONFIG.USER_API + '/api/auth/login',
+    { username: DEMO_ACCOUNT.username, password: DEMO_ACCOUNT.password });
+  me.token = data.token; me.userId = data.userId; me.nickname = data.nickname; me.role = data.role;
+  renderIdentity();
+}
+
+/* ---------- 页签切换 ---------- */
+document.querySelectorAll('nav .tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('nav .tab').forEach(x => x.classList.toggle('active', x === t));
+  document.querySelectorAll('.panel-page').forEach(p =>
+    p.classList.toggle('show', p.id === 'page-' + t.dataset.page));
+  if (t.dataset.page === 'problems') loadProblems();
+  if (t.dataset.page === 'submit') loadHistory();
+});
+
+/* =====================================================================
+ * 题库页签
+ * ===================================================================== */
+let currentDiff = '';
+document.querySelectorAll('#diff-filter .chip').forEach(c => c.onclick = () => {
+  currentDiff = c.dataset.diff;
+  document.querySelectorAll('#diff-filter .chip').forEach(x => x.classList.toggle('active', x === c));
+  loadProblems();
+});
+$('btn-refresh-problems').onclick = loadProblems;
+
+async function loadProblems() {
+  const url = API_CONFIG.PROBLEM_API + '/api/problems' + (currentDiff ? '?difficulty=' + currentDiff : '');
+  let list;
+  try { list = await call('GET', url); }
+  catch (e) { $('prob-grid').innerHTML = `<div class="empty">加载失败：${esc(e.message)}</div>`; return; }
+  if (!list.length) {
+    $('prob-grid').innerHTML = `<div class="empty" style="grid-column:1/-1">
+      暂无题目。点上方「✦ 新建 A+B 示例题」，一键完成 注册演示账号 → 登录 → 建题 → 传用例。</div>`;
+    return;
+  }
+  $('prob-grid').innerHTML = list.map(p => `
+    <div class="card prob-card">
+      <div class="top">
+        <span class="title">#${p.id} ${esc(p.title)}</span>
+        <span class="badge ${p.status === 'PUBLISHED' ? 'AC' : 'CE'}">${esc(p.status)}</span>
+      </div>
+      <div class="meta">
+        <span class="diff-dot ${esc(p.difficulty)}"></span><b>${esc(p.difficulty)}</b>
+        <span class="tag">${p.timeLimitMs} ms / case</span>
+        <span class="tag">${Math.round(p.memoryLimitKb / 1024)} MB</span>
+      </div>
+      <div class="prob-desc">${esc(p.description)}</div>
+      <div><button class="ghost" data-go="${p.id}">去提交 →</button></div>
+    </div>`).join('');
+  $('prob-grid').querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
+    document.querySelector('nav .tab[data-page="submit"]').click();
+    syncProblemOptions().then(() => { $('sel-problem').value = b.dataset.go; });
+  });
+}
+
+/* 一键初始化演示环境：注册→登录→建 A+B 题→浏览器端 base64 传 2 个用例 */
+$('btn-bootstrap').onclick = async () => {
+  const btn = $('btn-bootstrap'); btn.disabled = true; btn.textContent = '初始化中…';
+  try {
+    await ensureAuth();
+    const id = 'demo-' + Date.now();
+    apiLog('STEP', id, '登录完成 uid=' + me.userId, true, 0);
+    const created = await call('POST', API_CONFIG.PROBLEM_API + '/api/problems', {
+      title: 'A+B 求和', difficulty: 'EASY',
+      description: '读入两个整数 a 和 b（一行，空格分隔），输出 a+b。\n' +
+        '样例输入: 1 2\n样例输出: 3',
+      timeLimitMs: 2000, memoryLimitKb: 262144, status: 'PUBLISHED'
+    });
+    const pid = created.id;
+    apiLog('STEP', id, '建题成功 problemId=' + pid, true, 0);
+    // btoa 只接受 Latin-1，用例内容全 ASCII，直接编码即可
+    const b64 = (s) => btoa(s);
+    await call('POST', API_CONFIG.PROBLEM_API + `/api/problems/${pid}/cases`, {
+      cases: [
+        { inputBase64: b64('1 2\n'),   outputBase64: b64('3\n'),   sample: true  },
+        { inputBase64: b64('10 20\n'), outputBase64: b64('30\n'),  sample: false }
+      ]
+    });
+    apiLog('STEP', id, '上传 2 个用例完成', true, 0);
+    toast(`演示题已就绪：A+B（#${pid}）`, true);
+    await loadProblems();
+    await syncProblemOptions(); $('sel-problem').value = pid;
+    document.querySelector('nav .tab[data-page="submit"]').click();
+  } catch (e) { toast('初始化失败：' + e.message, false); }
+  finally { btn.disabled = false; btn.textContent = '✦ 新建 A+B 示例题（一键初始化演示环境）'; }
+};
+
+/* =====================================================================
+ * 提交页签
+ * ===================================================================== */
+const SAMPLES = {
+  ac: `import java.util.Scanner;
+
+// 正确答案：读两个整数，输出其和
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int a = sc.nextInt();
+        int b = sc.nextInt();
+        System.out.println(a + b);
+    }
+}`,
+  tle: `// 死循环：每个用例都会撞爆 timeLimitMs，演示 TLE 路径
+public class Main {
+    public static void main(String[] args) {
+        long x = 0;
+        while (true) {
+            x += System.nanoTime();
+        }
+    }
+}`,
+  ce: `// 语法错误：少分号、类型不匹配，javac 直接拒绝，演示 CE 路径
+public class Main {
+    public static void main(String[] args) {
+        int sum = 1 2
+        System.out.println("oops, sum = " + sum
+    }
+}`
+};
+
+function renderGutter() {
+  const lines = $('editor').value.split('\n').length;
+  $('gutter').innerHTML = Array.from({ length: lines }, (_, i) => `<div>${i + 1}</div>`).join('');
+}
+$('editor').addEventListener('input', renderGutter);
+$('editor').addEventListener('scroll', () => { $('gutter').scrollTop = $('editor').scrollTop; });
+$('editor').addEventListener('focus', () => $('code-wrap').classList.add('focus'));
+$('editor').addEventListener('blur', () => $('code-wrap').classList.remove('focus'));
+$('editor').addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); $('btn-submit').click(); }
+});
+$('sel-sample').onchange = () => { $('editor').value = SAMPLES[$('sel-sample').value]; renderGutter(); };
+
+async function syncProblemOptions() {
+  try {
+    const list = await call('GET', API_CONFIG.PROBLEM_API + '/api/problems');
+    const sel = $('sel-problem');
+    sel.innerHTML = list.length
+      ? list.map(p => `<option value="${p.id}">#${p.id} ${esc(p.title)}（${esc(p.difficulty)}）</option>`).join('')
+      : `<option value="">（暂无题目，先去题库页一键建题）</option>`;
+  } catch (e) { /* 题库服务未起时静默，提交页其他功能不受影响 */ }
+}
+
+let pollTimer = null;
+$('btn-submit').onclick = async () => {
+  const code = $('editor').value;
+  const problemId = Number($('sel-problem').value);
+  if (!problemId) { toast('还没有可提交的题目：先去「题库」点一键建题', false); return; }
+  if (!code.trim()) { toast('代码为空', false); return; }
+  const btn = $('btn-submit'); btn.disabled = true;
+  try {
+    // 直连 judge-service（8103）时 X-User-Id 需前端自带；经网关时由网关注入，前端无需关心
+    await ensureAuth();
+    const data = await call('POST', API_CONFIG.JUDGE_API + '/api/submissions',
+      { problemId, language: $('sel-lang').value, code },
+      { 'X-User-Id': String(me.userId) });
+    setTimeline('QUEUED');
+    $('result-hero').innerHTML = `<span class="big"><span class="badge QUEUED">QUEUED</span></span>
+      <span class="kv">提交 <b>#${data.submissionId}</b> · 队列位置 <b>${data.queuePosition}</b>，1s 轮询拉取终态…<br>
+      <span style="font-size:11px">（升级点：改订 WebSocket /ws/judge 推送，轮询留作断线兜底）</span></span>`;
+    $('result-err').innerHTML = '';
+    startPolling(data.submissionId);
+  } catch (e) { toast('提交失败：' + e.message, false); }
+  finally { btn.disabled = false; }
+};
+
+const ORDER = ['QUEUED', 'RUNNING', 'DONE'];
+function setTimeline(status) {
+  const idx = ORDER.indexOf(status === 'REQUEUE' ? 'QUEUED' : status);
+  document.querySelectorAll('.tl-step').forEach((el, i) => {
+    el.classList.toggle('done', i < idx);
+    el.classList.toggle('on', i === idx);
+  });
+}
+
+function startPolling(submissionId) {
+  clearInterval(pollTimer);
+  let ticks = 0, lastStatus = null;
+  pollTimer = setInterval(async () => {
+    ticks++;
+    let s;
+    try { s = await call('GET', API_CONFIG.JUDGE_API + '/api/submissions/' + submissionId); }
+    catch (e) { stopPolling('轮询失败：' + e.message); return; }
+    if (s.status !== lastStatus) { lastStatus = s.status; setTimeline(s.status); }
+    if (s.status === 'DONE') { stopPolling(); renderResult(s); loadHistory(); return; }
+    if (ticks > POLL_SUBMIT_MAX) stopPolling('轮询超时（' + POLL_SUBMIT_MAX + 's），可稍后在历史表格里点行回看');
+  }, POLL_SUBMIT_MS);
+}
+function stopPolling(err) {
+  clearInterval(pollTimer); pollTimer = null;
+  if (err) { setTimeline(''); $('result-err').innerHTML = `<div class="errbox">${esc(err)}</div>`; }
+}
+
+const VERDICT_LABEL = { AC: 'Accepted', WA: 'Wrong Answer', TLE: 'Time Limit Exceeded',
+  MLE: 'Memory Limit Exceeded', RE: 'Runtime Error', CE: 'Compile Error' };
+function renderResult(s) {
+  const rc = s.resultCode || 'WA';
+  $('result-hero').innerHTML = `
+    <span class="big"><span class="badge ${esc(rc)}" style="font-size:22px;padding:10px 22px">${esc(rc)}</span></span>
+    <span class="kv">
+      <b>${esc(VERDICT_LABEL[rc] || rc)}</b> · 提交 #${s.id} · ${esc(s.language)}<br>
+      用例通过 <b style="color:${rc === 'AC' ? 'var(--ac)' : 'var(--text)'}">${s.passedCases ?? '-'} / ${s.totalCases ?? '-'}</b>
+      &nbsp;·&nbsp; 最大耗时 <b>${s.timeUsedMs ?? '-'} ms</b>
+      &nbsp;·&nbsp; 峰值内存 <b>${s.memoryUsedKb ? Math.round(s.memoryUsedKb / 1024) + ' MB' : '-'}</b>
+    </span>`;
+  $('result-err').innerHTML = s.errorMsg ? `<div class="errbox">${esc(s.errorMsg)}</div>` : '';
+  toast(rc === 'AC' ? 'Accepted 🎉' : '判定完成：' + rc, rc === 'AC');
+}
+
+/* 历史提交：点击行回看代码与结果 */
+async function loadHistory() {
+  try {
+    await syncProblemOptions();
+    const q = me.userId ? '?userId=' + me.userId : '';
+    const list = await call('GET', API_CONFIG.JUDGE_API + '/api/submissions' + q);
+    const probTitle = (id) => { const o = $('sel-problem').querySelector(`option[value="${id}"]`); return o ? o.textContent : '#' + id; };
+    $('history-body').innerHTML = list.map(s => `
+      <tr data-id="${s.id}">
+        <td>#${s.id}</td>
+        <td>${esc(probTitle(s.problemId))}</td>
+        <td><span class="badge ${esc(s.status)}" style="animation:none">${esc(s.status)}</span></td>
+        <td>${s.resultCode ? `<span class="badge ${esc(s.resultCode)}" style="animation:none">${esc(s.resultCode)}</span>` : '-'}</td>
+        <td>${s.passedCases != null ? s.passedCases + '/' + s.totalCases : '-'}</td>
+        <td>${s.timeUsedMs != null ? s.timeUsedMs + 'ms' : '-'}</td>
+        <td>${esc(String(s.submitTime || '').replace('T', ' ').slice(5, 19))}</td>
+      </tr>`).join('') || '<tr><td colspan="7" style="color:var(--text-dim)">暂无提交记录</td></tr>';
+    $('history-body').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = async () => {
+      const s = await call('GET', API_CONFIG.JUDGE_API + '/api/submissions/' + tr.dataset.id);
+      if (s.code === undefined) {
+        // detail 接口回显裁剪了全文 code，历史列表行自带全文，直接从当前列表数据取
+        const raw = list.find(x => String(x.id) === tr.dataset.id);
+        if (raw && raw.code) { $('editor').value = raw.code; renderGutter(); }
+      }
+      if (s.status === 'DONE') { setTimeline('DONE'); renderResult(s); }
+      toast('已回看提交 #' + s.id + ' 的代码与结果');
+    });
+  } catch (e) { /* judge 未起时静默 */ }
+}
+$('btn-refresh-history').onclick = loadHistory;
+
+/* =====================================================================
+ * 监控页签：3s 轮询 /api/judge/status，SVG 环形仪表 + 柱状历史 + sparkline
+ * ===================================================================== */
+const samples = []; // {queued, running, workerBusy, workerCapacity}
+const NS = 'http://www.w3.org/2000/svg';
+/* mk：SVG 元素工厂（命名刻意避开 svg，防止与局部变量 svg 元素相互遮蔽） */
+function mk(tag, attrs) {
+  const el = document.createElementNS(NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function drawRing(svgId, ratio, color) {
+  const el = $(svgId); el.innerHTML = '';
+  const r = 46, c = 2 * Math.PI * r;
+  el.appendChild(mk('circle', { cx: 60, cy: 60, r, fill: 'none', stroke: 'rgba(255,255,255,0.07)',
+    'stroke-width': 9, transform: 'rotate(-90 60 60)' }));
+  const arc = mk('circle', { cx: 60, cy: 60, r, fill: 'none', stroke: color, 'stroke-width': 9,
+    'stroke-linecap': 'round', 'stroke-dasharray': c, 'stroke-dashoffset': c,
+    transform: 'rotate(-90 60 60)' });
+  el.appendChild(arc);
+  requestAnimationFrame(() => { arc.style.transition = 'stroke-dashoffset 0.7s ease';
+    arc.setAttribute('stroke-dashoffset', c * (1 - Math.max(0, Math.min(1, ratio)))); });
+}
+function drawBars() {
+  const el = $('bars'); el.innerHTML = '';
+  const W = el.clientWidth || 600, H = 110, n = 40;
+  const max = Math.max(1, ...samples.map(s => Math.max(s.queued, s.running)));
+  const bw = Math.max(3, W / n - 4);
+  for (let i = 0; i < samples.length; i++) {
+    const x = i * (W / n) + 2, s = samples[i];
+    for (const [v, color, w] of [[s.running, '#fbbf24', bw], [s.queued, '#60a5fa', bw / 2]]) {
+      const ratio = v / max;
+      const h = ratio > 0 ? Math.max(2, ratio * (H - 8)) : 0;
+      if (h) el.appendChild(mk('rect', { x, y: H - h, width: w, height: h, rx: 2, fill: color, opacity: 0.85 }));
+    }
+  }
+}
+function drawSpark(svgId, key, color) {
+  const el = $(svgId); el.innerHTML = '';
+  const W = el.clientWidth || 400, H = 52;
+  if (samples.length < 2) return;
+  const max = Math.max(1, ...samples.map(s => s[key]));
+  const pts = samples.map((s, i) =>
+    `${(i / (samples.length - 1)) * (W - 8) + 4},${H - 6 - (s[key] / max) * (H - 14)}`).join(' ');
+  el.appendChild(mk('polyline', { points: pts, fill: 'none', stroke: color, 'stroke-width': 1.8,
+    'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+  const last = pts.split(' ').pop().split(',');
+  el.appendChild(mk('circle', { cx: last[0], cy: last[1], r: 3, fill: color }));
+}
+function renderMonitor() {
+  const s = samples[samples.length - 1];
+  if (!s) return;
+  $('g-queued-num').textContent = s.queued;
+  $('g-running-num').textContent = s.running;
+  $('g-worker-num').textContent = `${s.workerBusy} / ${s.workerCapacity}`;
+  drawRing('g-queued', Math.min(1, s.queued / Math.max(4, s.workerCapacity * 4)), '#60a5fa');
+  drawRing('g-running', s.workerCapacity ? s.running / s.workerCapacity : Math.min(1, s.running / 4), '#fbbf24');
+  drawRing('g-worker', s.workerCapacity ? s.workerBusy / s.workerCapacity : 0, '#22d3ee');
+  drawBars(); drawSpark('spark-q', 'queued', '#60a5fa'); drawSpark('spark-r', 'running', '#fbbf24');
+}
+setInterval(async () => { // 全局低频轮询，页面不可见也无妨，接口极轻
+  try {
+    const d = await call('GET', API_CONFIG.JUDGE_API + '/api/judge/status');
+    samples.push(d); if (samples.length > 40) samples.shift();
+    renderMonitor();
+  } catch (e) { /* judge-service 未起时静默，日志抽屉里能看到失败 */ }
+}, POLL_MONITOR_MS);
+
+/* ---------- 启动 ---------- */
+renderGutter(); $('editor').value = SAMPLES.ac; renderGutter();
+renderIdentity();
+loadProblems();
+</script>
+</body>
+</html>

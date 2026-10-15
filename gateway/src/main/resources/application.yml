@@ -1,0 +1,58 @@
+# gateway 配置：路由用 lb://服务名 —— 地址由 Nacos 动态解析，不写死 IP:PORT
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mini-gateway
+  cloud:
+    nacos:
+      server-addr: localhost:8848
+      discovery:
+        namespace: mini-judge   # 本地开发命名空间，不存在时会自动落到 public，正式部署建好它
+    gateway:
+      # 全局 CORS（WebFlux 网关的标准做法：globalcors 装配的是响应式 CorsWebFilter，
+      # 不是 Servlet 栈的 CorsFilter——网关里没有 Servlet 容器，写错栈类根本不生效，这是常见坑）。
+      # 定位：这是"前后端分离"开发/演示形态的兜底——独立静态前端从任意本地端口
+      # （如 http://localhost:5500、file:// 打开时 Origin 为 null）跨端口访问 8085 时由这里放行。
+      # 生产同域反向代理（nginx 把 / 和 /api 挂到同一域名）后不需要本配置，可整体删除。
+      # 预检放行顺序说明：CorsWebFilter 是 WebFilter，先于路由链与 JwtGlobalFilter(GlobalFilter)
+      # 执行，OPTIONS 预检不带 Authorization 也不会被 401 拦——浏览器预检天然短路于鉴权之前。
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            # 用 allowedOriginPatterns 而非 allowedOrigins：standalone 前端端口不固定，
+            # 且 Origin 为 null（file:// 打开）时 "*" 模式也能匹配。不启用 credentials
+            # （身份走 Authorization: Bearer 头而非 Cookie），避免与通配来源互斥的限制。
+            allowedOriginPatterns: "*"
+            allowedMethods: "GET,POST,PUT,DELETE,OPTIONS"
+            allowedHeaders: "Authorization,Content-Type,X-User-Id"
+            # 本版本 GlobalCorsProperties 将 maxAge 绑定为 Long（秒）；写 3600s 会绑定失败——启动验证过
+            maxAge: 3600
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**,/api/users/**
+        - id: problem-service
+          uri: lb://problem-service
+          predicates:
+            - Path=/api/problems/**
+        - id: judge-service
+          uri: lb://judge-service
+          predicates:
+            - Path=/api/submissions/**,/api/judge/**
+        # WebSocket 路由：STOMP 端点单独转发（ws 升级需要网关不缓冲）
+        - id: judge-ws
+          uri: lb:ws://judge-service
+          predicates:
+            - Path=/ws/**
+
+mini-judge:
+  jwt:
+    # 与 user-service 保持同一密钥（生产应放配置中心 Nacos Config，实现热更与多实例一致）
+    secret: mini-judge-dev-secret-key-must-be-at-least-32-bytes!
+
+logging:
+  level:
+    org.springframework.cloud.gateway: info

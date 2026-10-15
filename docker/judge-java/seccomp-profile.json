@@ -1,0 +1,49 @@
+{
+  "_comment_zh": [
+    "seccomp 示例 profile（计划书 7.1 护栏5 的一半：另一半天平是 -u 降权）。",
+    "采用『默认放行 + 拉黑危险调用』的减法思路：JVM 系统调用面太宽，",
+    "白名单(ERRNO 默认)写法会直接杀死 java，减法配置对演示足够且不易自伤。",
+    "生产应反过来做：从最小 syscall 白名单起步逐步补齐（洛谷/代码岛同款路线），",
+    "并配合 clone/unshare 的 flags 参数过滤禁掉 CLONE_NEWUSER 等命名空间创建。",
+    "使用方式：docker run --security-opt seccomp=profile.json（相对 CWD 解析，",
+    "SandboxRunner.buildCommand 里写死了该文件名，评测机需保证 CWD 下有本文件，",
+    "真实落地应改为绝对路径配置项——记入待真机验证清单）。"
+  ],
+  "defaultAction": "SCMP_ACT_ALLOW",
+  "architectures": [
+    "SCMP_ARCH_X86_64",
+    "SCMP_ARCH_X86",
+    "SCMP_ARCH_AARCH64"
+  ],
+  "syscalls": [
+    {
+      "names": [
+        "kexec_load", "kexec_file_load",
+        "reboot",
+        "mount", "umount2", "pivot_root",
+        "chroot",
+        "init_module", "finit_module", "delete_module",
+        "query_module",
+        "personality",
+        "bpf",
+        "perf_event_open",
+        "keyctl", "add_key", "request_key",
+        "lookup_dcookie",
+        "open_by_handle_at", "name_to_handle_at",
+        "process_vm_readv", "process_vm_writev",
+        "ptrace",
+        "setns", "unshare"
+      ],
+      "action": "SCMP_ACT_ERRNO",
+      "errnoValue": 1,
+      "comment_zh": "内核加载/提权/逃逸/调试类调用：用户代码全都不该碰。ptrace 拉黑防调试沙箱内父进程；setns/unshare 防自建命名空间逃逸。"
+    },
+    {
+      "names": [
+        "fork", "vfork", "clone", "clone3", "execve", "execveat"
+      ],
+      "action": "SCMP_ACT_ALLOW",
+      "comment_zh": "故意保留进程族调用：fork 炸弹防线不靠 seccomp，靠宿主 --pids-limit 64（分层护栏思路：每层只防它最擅长的）。"
+    }
+  ]
+}

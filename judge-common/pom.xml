@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  judge-common：各服务共享的极小公共件。
+  原则（面试点）：微服务共享库只放"无状态、无框架耦合"的东西
+  （统一响应体、JWT 工具），业务实体绝不放公共模块，否则服务间产生编译期耦合。
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.minijudge</groupId>
+    <artifactId>mini-judge</artifactId>
+    <version>0.1.0</version>
+  </parent>
+  <artifactId>judge-common</artifactId>
+
+  <dependencies>
+    <!-- JWT 工具用到；impl 由各运行服务自己引入 -->
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+  </dependencies>
+</project>

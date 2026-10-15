@@ -1,0 +1,34 @@
+# user-service：端口 8101，注册进 Nacos；只被网关访问
+server:
+  port: 8101
+
+spring:
+  application:
+    name: user-service          # 网关 lb://user-service 依赖此名字
+  datasource:
+    url: jdbc:mysql://localhost:3306/mini_judge?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    # 密码走环境变量（本地开发请设置 SPRING_DATASOURCE_PASSWORD）
+    password: ${SPRING_DATASOURCE_PASSWORD:changeme}
+  sql:
+    init:
+      mode: always              # 开发期自动建表（幂等脚本）
+      schema-locations: classpath:schema.sql
+  cloud:
+    nacos:
+      server-addr: localhost:8848
+      discovery:
+        namespace: mini-judge
+
+mini-judge:
+  jwt:
+    secret: mini-judge-dev-secret-key-must-be-at-least-32-bytes!   # 与网关一致
+  # 管理引导密钥：注册带对 key → role=ADMIN；用户名已存在且带对 key → 幂等提升。
+  # 仅限本机演示（前端"一键初始化演示题"用它保住 demo 管理员链路）；
+  # 生产必须挪进配置中心并加密轮换，前端产物绝不能打包真实 key。留空=关闭引导通道。
+  # 演示用引导密钥：生产必须改为环境变量注入并轮换
+  admin-bootstrap-key: ${ADMIN_BOOTSTRAP_KEY:demo-only-change-me}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true

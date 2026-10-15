@@ -1,0 +1,159 @@
+# =====================================================================
+# mini-judge 一键部署编排（计划书第 2 章"部署"行的落地）
+#
+# 拓扑：mysql + redis + nacos 三个基础设施容器，
+#       gateway/user/problem/judge 四个业务容器（挂载 mvn package 产物运行，
+#       不为每个服务单独写 Dockerfile——演示阶段"jar+temurin 基础镜像"足够，
+#       生产再分层镜像 + CI 出镜像 tag）。
+#
+# 前置：Linux 评测机或 Windows Docker Desktop（需启动 Docker Desktop）。
+#       先构建：mvn -DskipTests package            （产出 4 个 fat jar）
+#       再启动：docker compose up -d
+#
+# 重要边界说明（面试可讲的"容器化程度"取舍）：
+# 1. 本编排默认 judge-service sandbox.mode=docker。但 judge-service 在容器里
+#    再 docker run（DooD）有两个坑：a) Windows Docker Desktop 的 CLI socket 是
+#    npipe 而非 /var/run/docker.sock；b) 容器内路径挂到宿主 daemon 时会按
+#    "宿主视角"解析，卷路径翻译复杂。真实评测机推荐 judge-service 直接跑在
+#    宿主（systemd 服务），只有其余三服务+基础设施进容器——见 README"docker
+#    模式"小节。此处 compose 全容器形态标注为【待真机验证】。
+# 2. problem-service 的 8102 端口故意不映射到宿主：外部流量必须过网关，
+#    用例数据路由不过公网（计划书 10 章"用例泄露"的网络隔离半边；网关侧
+#    另有 LocalCaseDenyFilter 演示拦截，双保险）。
+# 3. 数据卷全部具名，重启不丢库；nacos 演示用内嵌 derby，不另配 mysql 元数据库。
+# =====================================================================
+
+name: mini-judge
+
+services:
+
+  # ---------------- 基础设施 ----------------
+  mysql:
+    image: mysql:8.0
+    container_name: mj-mysql
+    # 各服务 spring.sql.init.mode=always + CREATE TABLE IF NOT EXISTS 的
+    # schema.sql 在连接池首次就绪时自动建表，这里只需保证库存在
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_DATABASE: mini_judge
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    ports:
+      - "3306:3306"          # 映射出来方便本机 client 冒烟对库
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    container_name: mj-redis
+    # 计划书里 Redis 的既定用途：题面缓存/评测统计。当前 MVP 代码尚未接入
+    # 缓存层，这里先按目标架构占位（演进预留位，面试讲"为什么骨架里有它"）
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: mj-nacos
+    environment:
+      MODE: standalone          # 单机演示：内嵌 derby，不依赖外部 mysql 元库
+      NACOS_AUTH_ENABLE: "false"  # 演示关闭鉴权；生产必须开 token+默认口令修改
+    ports:
+      - "8848:8848"             # HTTP 控制台/OpenAPI
+      - "9848:9848"             # gRPC：2.x 客户端注册/订阅实际走这个口，缺了必挂
+    volumes:
+      - nacos-data:/home/nacos/data
+
+  # ---------------- 业务服务（挂载 fat jar 运行） ----------------
+  gateway:
+    image: eclipse-temurin:17-jre
+    container_name: mj-gateway
+    working_dir: /app
+    volumes:
+      - ./gateway/target/gateway-0.1.0.jar:/app/app.jar:ro
+      # 网关不碰数据库：仅鉴权+路由（依赖列表里无 datasource）
+    command: ["java", "-jar", "/app/app.jar"]
+    environment:
+      # 覆盖 application.yml 里的 localhost 默认值：compose 网络内按服务名解析
+      SPRING_CLOUD_NACOS_SERVER_ADDR: nacos:8848
+      SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE: mini-judge
+    ports:
+      - "8080:8080"             # 全站唯一对外入口（计划书第 6 章网关聚合前缀）
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+
+  user-service:
+    image: eclipse-temurin:17-jre
+    container_name: mj-user
+    working_dir: /app
+    volumes:
+      - ./user-service/target/user-service-0.1.0.jar:/app/app.jar:ro
+    command: ["java", "-jar", "/app/app.jar"]
+    environment:
+      SPRING_CLOUD_NACOS_SERVER_ADDR: nacos:8848
+      SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE: mini-judge
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mini_judge?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-changeme}
+      # JWT 密钥与网关必须一致（生产：挪进 Nacos Config 统一分发）
+      MINI_JUDGE_JWT_SECRET: mini-judge-dev-secret-key-must-be-at-least-32-bytes!
+    # 8101 不映射宿主：外部一律走 8080 网关
+
+  problem-service:
+    image: eclipse-temurin:17-jre
+    container_name: mj-problem
+    working_dir: /app
+    volumes:
+      - ./problem-service/target/problem-service-0.1.0.jar:/app/app.jar:ro
+      - judge-cases:/data/cases      # 用例落盘共享卷（与 judge-service 同路径同卷）
+    command: ["java", "-jar", "/app/app.jar"]
+    environment:
+      SPRING_CLOUD_NACOS_SERVER_ADDR: nacos:8848
+      SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE: mini-judge
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mini_judge?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-changeme}
+      # 用例目录固定进共享卷（基线配置是相对路径 cases，容器里必须给绝对路径）
+      MINI_JUDGE_PROBLEM_CASES_ROOT: /data/cases
+    # 注意：8102 故意不映射——题面读走网关，cases 路由网关再拦一道（双保险）
+
+  judge-service:
+    image: eclipse-temurin:17-jre-jammy   # judge 镜像含 java 运行环境；-jdk 版
+                                           # 还带 javac，simulate 兜底与调试更方便
+    container_name: mj-judge
+    working_dir: /app
+    volumes:
+      - ./judge-service/target/judge-service-0.1.0.jar:/app/app.jar:ro
+      - judge-cases:/data/cases:ro       # 评测只读用例；写权限只有 problem 端有
+      # 【待真机验证】DooD 通道：Linux 上挂 docker.sock 即可；Windows Docker
+      # Desktop 需改用 npipe:////./pipe/docker_engine，且容器内工作目录路径
+      # 需翻译成宿主路径（sandbox work-root 建议设为宿主 bind 卷的宿主侧路径）
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["java", "-jar", "/app/app.jar"]
+    environment:
+      SPRING_CLOUD_NACOS_SERVER_ADDR: nacos:8848
+      SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE: mini-judge
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mini_judge?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-changeme}
+      MINI_JUDGE_SANDBOX_MODE: docker            # 生产形态：容器沙箱五层护栏
+      MINI_JUDGE_SANDBOX_CASES_ROOT: /data/cases # 与上方卷挂载路径保持一致
+      MINI_JUDGE_JUDGE_WORK_ROOT: /data/work     # 评测工作目录（容器内路径）
+    ports:
+      - "8103:8103"   # 调试期映射；演示 WebSocket/轮询直连用，生产可去掉
+
+volumes:
+  mysql-data:
+  redis-data:
+  nacos-data:
+  judge-cases:

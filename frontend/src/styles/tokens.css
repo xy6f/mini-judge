@@ -1,0 +1,227 @@
+/* ═══════════════════════════════════════════════════════════════════
+ * mini-judge 设计令牌 —— 深空玻璃拟态体系（自原生版 app.css 平移升级）
+ * 底色 #0b1020；主渐变 violet(#8b5cf6) → cyan(#22d3ee)；
+ * 判定徽章体系：AC 绿 / WA 黄 / TLE 红 / CE 灰 / QUEUED 呼吸蓝。
+ * 与 Element Plus 暗色 css-vars 并存：EP 组件用 --ep 变量，
+ * 本文件负责页面级玻璃卡片、徽章与渐变按钮。
+ * ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --mj-bg: #0b1020;
+  --mj-bg-deep: #070b18;
+  --mj-panel: rgba(255, 255, 255, 0.045);
+  --mj-panel-strong: rgba(255, 255, 255, 0.08);
+  --mj-border: rgba(255, 255, 255, 0.09);
+  --mj-border-hi: rgba(139, 92, 246, 0.45);
+  --mj-text: #e6e9f2;
+  --mj-muted: #8a93ad;
+  --mj-violet: #8b5cf6;
+  --mj-cyan: #22d3ee;
+  --mj-grad: linear-gradient(135deg, #8b5cf6, #22d3ee);
+  --mj-grad-soft: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(34, 211, 238, 0.12));
+
+  /* 判定徽章色板 */
+  --mj-ac: #34d399;
+  --mj-wa: #fbbf24;
+  --mj-tle: #f87171;
+  --mj-ce: #9aa3b8;
+  --mj-re: #f472b6;
+  --mj-queued: #60a5fa;
+  --mj-running: #22d3ee;
+
+  --mj-radius: 12px;
+  --mj-shadow: 0 10px 30px rgba(2, 6, 23, 0.55);
+  --mj-code-font: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+  --mj-line-h: 22px;
+}
+
+html.dark {
+  /* 让 Element Plus 暗色变量贴合深空底色 */
+  --el-bg-color: var(--mj-bg);
+  --el-bg-color-page: var(--mj-bg);
+  --el-bg-color-overlay: #131a2e;
+  --el-text-color-primary: var(--mj-text);
+  --el-text-color-regular: #c3cadd;
+  --el-text-color-secondary: var(--mj-muted);
+  --el-border-color: var(--mj-border);
+  --el-border-color-light: var(--mj-border);
+  --el-border-color-lighter: var(--mj-border);
+  --el-fill-color-blank: transparent;
+  --el-color-primary: var(--mj-violet);
+  --el-color-primary-light-3: #a78bfa;
+  --el-color-primary-light-5: #bda4fc;
+  --el-color-primary-light-7: #d4c5fd;
+  --el-color-primary-light-8: #e2d8fe;
+  --el-color-primary-light-9: #efe8fe;
+  --el-mask-color: rgba(7, 11, 24, 0.6);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  color: var(--mj-text);
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(139, 92, 246, 0.16), transparent 60%),
+    radial-gradient(900px 480px at -10% 100%, rgba(34, 211, 238, 0.10), transparent 55%),
+    var(--mj-bg);
+  background-attachment: fixed;
+  font-size: 14px;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.28); border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.mono { font-family: var(--mj-code-font); }
+.muted { color: var(--mj-muted); }
+
+/* ── 玻璃卡片 ── */
+.glass {
+  background: var(--mj-panel);
+  border: 1px solid var(--mj-border);
+  border-radius: var(--mj-radius);
+  box-shadow: var(--mj-shadow);
+  backdrop-filter: blur(14px);
+}
+
+/* ── 渐变主按钮（EP 按钮之外的自定义 CTA） ── */
+.btn-gradient {
+  border: none;
+  color: #fff;
+  background: var(--mj-grad);
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+  transition: filter 0.15s, transform 0.15s;
+}
+.btn-gradient:hover { filter: brightness(1.12); }
+.btn-gradient:active { transform: translateY(1px); }
+.btn-gradient:disabled { filter: grayscale(0.5) brightness(0.7); cursor: not-allowed; }
+
+/* ── 过滤芯片 ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--mj-panel);
+  border: 1px solid var(--mj-border);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--mj-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.chip:hover { color: var(--mj-text); border-color: var(--mj-border-hi); }
+.chip.active { color: #fff; background: rgba(139, 92, 246, 0.22); border-color: var(--mj-border-hi); }
+
+/* ── 难度圆点 ── */
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.easy   { background: var(--mj-ac);   box-shadow: 0 0 8px var(--mj-ac); }
+.dot.medium { background: var(--mj-wa);   box-shadow: 0 0 8px var(--mj-wa); }
+.dot.hard   { background: var(--mj-tle);  box-shadow: 0 0 8px var(--mj-tle); }
+
+/* ── 判定 / 状态徽章体系 ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-family: var(--mj-code-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.badge.AC       { color: var(--mj-ac);      background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.4); }
+.badge.WA       { color: var(--mj-wa);      background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.4); }
+.badge.TLE      { color: var(--mj-tle);     background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); }
+.badge.MLE      { color: var(--mj-tle);     background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); }
+.badge.RE       { color: var(--mj-re);      background: rgba(244, 114, 182, 0.12); border-color: rgba(244, 114, 182, 0.4); }
+.badge.CE       { color: var(--mj-ce);      background: rgba(154, 163, 184, 0.12); border-color: rgba(154, 163, 184, 0.4); }
+.badge.DONE     { color: var(--mj-ce);      background: rgba(154, 163, 184, 0.12); border-color: rgba(154, 163, 184, 0.4); }
+.badge.RUNNING  { color: var(--mj-running); background: rgba(34, 211, 238, 0.12);  border-color: rgba(34, 211, 238, 0.4); }
+/* QUEUED：呼吸蓝 —— 蓝色光晕缓慢起伏，暗示"在队列里排队等位" */
+.badge.QUEUED {
+  color: var(--mj-queued);
+  background: rgba(96, 165, 250, 0.12);
+  border-color: rgba(96, 165, 250, 0.4);
+  animation: mj-breathe 1.8s ease-in-out infinite;
+}
+@keyframes mj-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.35); opacity: 0.82; }
+  50%      { box-shadow: 0 0 12px 3px rgba(96, 165, 250, 0.45); opacity: 1; }
+}
+
+/* 完成判定大徽章 */
+.big-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  font-family: var(--mj-code-font);
+  font-size: 22px;
+  font-weight: 700;
+  border: 2px solid var(--mj-ce);
+  color: var(--mj-ce);
+  background: var(--mj-panel);
+  animation: mj-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.big-badge.AC  { border-color: var(--mj-ac);  color: var(--mj-ac);  box-shadow: 0 0 28px rgba(52, 211, 153, 0.35); }
+.big-badge.WA  { border-color: var(--mj-wa);  color: var(--mj-wa);  box-shadow: 0 0 28px rgba(251, 191, 36, 0.3); }
+.big-badge.TLE,
+.big-badge.MLE { border-color: var(--mj-tle); color: var(--mj-tle); box-shadow: 0 0 28px rgba(248, 113, 113, 0.3); }
+.big-badge.RE  { border-color: var(--mj-re);  color: var(--mj-re);  box-shadow: 0 0 28px rgba(244, 114, 182, 0.3); }
+.big-badge.CE  { border-color: var(--mj-ce);  color: var(--mj-ce); }
+@keyframes mj-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* LIVE 呼吸点 */
+.live-dot { display: inline-flex; align-items: center; gap: 7px; color: var(--mj-ac); font-size: 12px; letter-spacing: 0.1em; }
+.live-dot i { width: 8px; height: 8px; border-radius: 50%; background: var(--mj-ac); animation: mj-breathe-green 1.6s ease-in-out infinite; }
+@keyframes mj-breathe-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
+  50% { box-shadow: 0 0 10px 3px rgba(52, 211, 153, 0.5); }
+}
+
+/* 数字变化闪烁 */
+.flash { animation: mj-flash 0.5s ease; }
+@keyframes mj-flash {
+  0% { color: var(--mj-cyan); text-shadow: 0 0 14px rgba(34, 211, 238, 0.8); }
+  100% { color: inherit; text-shadow: none; }
+}
+
+/* ── Element Plus 局部适配（覆盖到我们的暗色玻璃风格） ── */
+.el-drawer { background: #10162b !important; }
+.el-table {
+  --el-table-border-color: var(--mj-border);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: rgba(139, 92, 246, 0.08);
+  --el-table-row-hover-bg-color: rgba(139, 92, 246, 0.12);
+  background: transparent !important;
+}
+.el-table th.el-table__cell, .el-table td.el-table__cell { background: transparent !important; }
+.el-table__empty-block { background: transparent !important; }
+.el-select__wrapper, .el-input__wrapper {
+  background: var(--mj-panel) !important;
+  box-shadow: 0 0 0 1px var(--mj-border) inset !important;
+}
+.el-select__wrapper.is-focused, .el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--mj-border-hi) inset, 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+}
+.el-popover.el-popper {
+  background: #131a2e;
+  border: 1px solid var(--mj-border-hi);
+  box-shadow: var(--mj-shadow);
+}

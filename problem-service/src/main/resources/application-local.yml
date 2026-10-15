@@ -1,0 +1,9 @@
+# problem-service 本地开发 profile（local）：关闭 Nacos，单机冒烟不依赖注册中心。
+# 其余（端口 8102、MySQL、用例落盘目录）沿用基线配置。
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+    discovery:
+      enabled: false
