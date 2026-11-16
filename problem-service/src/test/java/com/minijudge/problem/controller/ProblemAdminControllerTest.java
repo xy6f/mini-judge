@@ -133,6 +133,64 @@ class ProblemAdminControllerTest {
         verify(problemMapper).insert(any(Problem.class));
     }
 
+    // ── dedupe 幂等建题 ─────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("dedupe=true 且同名 PUBLISHED 题已存在 → 复用返回 reused:true，不新建")
+    void dedupeHitReusesExistingProblem() {
+        when(userRoleMapper.selectRoleById(1L)).thenReturn("ADMIN");
+        Problem exist = new Problem();
+        exist.setId(7L);
+        exist.setTitle("A+B");
+        exist.setStatus("PUBLISHED");
+        when(problemMapper.selectOne(any())).thenReturn(exist);
+        ProblemAdminController.CreateProblemReq r = validReq();
+        r.setDedupe(true);
+        Result<Map<String, Object>> res = controller.create(1L, r);
+        assertEquals(0, res.code);
+        assertEquals(7L, res.data.get("id"));
+        assertEquals(true, res.data.get("reused"));
+        verify(problemMapper, never()).insert(any(Problem.class));
+    }
+
+    @Test
+    @DisplayName("dedupe=true 但查重未命中 → 照常新建，reused 字段缺省（不带该键）")
+    void dedupeMissCreatesNewProblem() {
+        when(userRoleMapper.selectRoleById(1L)).thenReturn("ADMIN");
+        when(problemMapper.selectOne(any())).thenReturn(null);
+        when(problemMapper.insert(any(Problem.class))).thenAnswer(inv -> {
+            inv.getArgument(0, Problem.class).setId(43L);
+            return 1;
+        });
+        ProblemAdminController.CreateProblemReq r = validReq();
+        r.setDedupe(true);
+        Result<Map<String, Object>> res = controller.create(1L, r);
+        assertEquals(0, res.code);
+        assertEquals(43L, res.data.get("id"));
+        // 未命中复用：响应不带 reused 键（Map.of 不允许 null 值，天然缺省）
+        assertTrue(!res.data.containsKey("reused"));
+        verify(problemMapper).insert(any(Problem.class));
+    }
+
+    @Test
+    @DisplayName("不带 dedupe（缺省 false）→ 行为与旧契约完全一致：不查重直接建")
+    void withoutDedupeBehaviorUnchanged() {
+        when(userRoleMapper.selectRoleById(1L)).thenReturn("ADMIN");
+        when(problemMapper.insert(any(Problem.class))).thenAnswer(inv -> {
+            inv.getArgument(0, Problem.class).setId(44L);
+            return 1;
+        });
+        ProblemAdminController.CreateProblemReq r = validReq();
+        // 显式置 null 模拟"旧调用方不带该字段"
+        r.setDedupe(null);
+        Result<Map<String, Object>> res = controller.create(1L, r);
+        assertEquals(0, res.code);
+        assertEquals(44L, res.data.get("id"));
+        // 旧契约：不触发查重查询，直接入库
+        verify(problemMapper, never()).selectOne(any());
+        verify(problemMapper).insert(any(Problem.class));
+    }
+
     // ── 传用例 ──────────────────────────────────────────────────────────
 
     @Test

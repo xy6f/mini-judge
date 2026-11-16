@@ -1,5 +1,6 @@
 package com.minijudge.problem.controller;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.minijudge.common.Result;
 import com.minijudge.problem.entity.Problem;
 import com.minijudge.problem.entity.TestCase;
@@ -97,6 +98,12 @@ public class ProblemAdminController {
         private String description;
         /** DRAFT/PUBLISHED：缺省 PUBLISHED 便于演示；正式流程应默认 DRAFT 走审核 */
         private String status;
+        /**
+         * 幂等开关（可选，缺省 false 保持向后兼容）：true 时先按 title + status=PUBLISHED
+         * 查重，命中直接返回已有题 id（响应带 reused:true），不再重复建题。
+         * 典型调用方是前端"一键初始化演示题"——同一标题连点/重试不膨胀题单。
+         */
+        private Boolean dedupe;
     }
 
     /** 传用例请求体：每个用例一段 base64 输入 + base64 期望输出 */
@@ -144,6 +151,24 @@ public class ProblemAdminController {
         p.setMemoryLimitKb(req.getMemoryLimitKb() == null ? 262144 : req.getMemoryLimitKb());
         p.setDescription(req.getDescription());
         p.setStatus("DRAFT".equals(req.getStatus()) ? "DRAFT" : "PUBLISHED");
+        // 幂等建题（dedupe=true）：先按 title+PUBLISHED 查重，命中即复用已有题 id。
+        // 并发取舍说明：这里只做"检查-创建"（check-then-insert），两个请求同时穿过
+        // 查重窗口仍可能建出两条同名题。给 t_problem.title 加 UNIQUE 约束不现实——
+        // 业务上多题同名完全合法（如不同作者各出一道"A+B 问题"），约束会误伤。
+        // 管理端建题是低频操作、演示链路单人触发，此窗口实际风险可接受；若未来
+        // 需要严格唯一，应上分布式锁（如 Redis setnx per-title）或入库前二次确认，
+        // 而不是改表结构。
+        if (Boolean.TRUE.equals(req.getDedupe())) {
+            Problem exist = problemMapper.selectOne(Wrappers.<Problem>lambdaQuery()
+                    .eq(Problem::getTitle, req.getTitle())
+                    .eq(Problem::getStatus, "PUBLISHED")
+                    .orderByAsc(Problem::getId)
+                    .last("LIMIT 1"));
+            if (exist != null) {
+                log.info("admin dedupe hit: reuse problem {} ({})", exist.getId(), exist.getTitle());
+                return Result.ok(Map.of("id", exist.getId(), "reused", true));
+            }
+        }
         problemMapper.insert(p);
         log.info("admin created problem {} ({})", p.getId(), p.getTitle());
         return Result.ok(Map.of("id", p.getId()));

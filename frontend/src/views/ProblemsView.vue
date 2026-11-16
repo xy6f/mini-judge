@@ -69,6 +69,8 @@ async function initDemoProblem() {
       reused = true;
     } else {
       // 4b. 首次初始化才建题（经网关的写路径：local profile 只拦 GET cases，POST 用例放行）
+      // dedupe:true 让后端也兜底幂等——万一前端查重与建题之间有并发窗口，
+      // 后端按 title+PUBLISHED 查重命中时直接复用并返回 reused:true
       const created = await http.post('/api/problems', {
         title: DEMO_TITLE,
         difficulty: 'EASY',
@@ -76,9 +78,12 @@ async function initDemoProblem() {
         timeLimitMs: 2000,
         memoryLimitKb: 262144,
         status: 'PUBLISHED',
+        dedupe: true,
       });
       demoId = created.id;
-      reused = false;
+      // 对齐后端 dedupe 契约：后端命中复用时响应带 reused:true——以前端本地
+      // 判断为主、后端字段兜底（并行窗口下后端可能替我们复用了已有题）
+      reused = created.reused === true;
       // 5. 浏览器端 btoa 编码两组用例：1 2→3 / 10 20→30
       await http.post(`/api/problems/${demoId}/cases`, {
         cases: [
