@@ -12,7 +12,17 @@
 | 组件库 | Element Plus 2.x（暗色主题） | 引入 `theme-chalk/dark/css-vars.css`，`<html class="dark">` |
 | 状态 | Pinia 3 | `auth`（token/userId 持久化）、`submissions`（轮询状态机 + 代数防竞态）、`logs`（API 流水） |
 | 路由 | vue-router 4（hash 模式） | 题库 `/problems`、提交 `/submit`、监控 `/monitor`；hash 模式使 dist 可被任意静态服务器直接托管 |
-| 设计 | `src/styles/tokens.css` | 深空底色 `#0b1020` 玻璃拟态、violet→cyan 渐变、AC 绿 / WA 黄 / TLE 红 / CE 灰 / QUEUED 呼吸蓝徽章体系 |
+| 设计 | `src/styles/tokens.css` | OJ 专业风（对标 LeetCode 中文版 + Codeforces）：亮色为主 `#f6f7f8` 底 + 白卡片（1px `#e8e8e8` 边、4px 圆角），保留暗色切换（顶栏月亮/太阳）；难度色严格对齐 LC（Easy `#26b35c` / Medium `#ffb800` / Hard `#ef4646`，10% 浅底文字徽章）；判定徽章按 OJ 惯例（AC 绿底白字、其余灰底彩字、QUEUED 转圈、大徽章 0.6s 缩放入场）；EP 变量桥 `--el-color-primary: #26b35c` |
+
+## 设计说明（对标 LeetCode 中文版 + Codeforces）
+
+- **主题**：亮色为主（LC 经典亮色：页面底 `#f6f7f8`、白卡片 `#ffffff` + 1px `#e8e8e8` 边 + 4px 紧凑圆角），顶栏月亮/太阳按钮保留暗色切换（`html.dark` + localStorage `mj.theme`）。
+- **难度色严格对齐 LeetCode**：Easy `#26b35c` / Medium `#ffb800` / Hard `#ef4646`，题目卡与筛选 chips 均用 10% 透明度同色浅底 + 深色字的文字徽章，弃用圆点。
+- **判定徽章对齐 OJ 惯例**：AC 绿底白字圆角；WA/TLE/RE/CE 灰底彩字；QUEUED 转圈图标 + 文字；提交结果大徽章带 0.6s 缩放入场动画。
+- **代码编辑器区 LeetCode 化**：顶部语言/题目选择条（`card-head` 灰底工具条）+ 1px 分割线 + 代码区等宽 13px / 行高 20px、行号列 `#adb5bd`，AC 示例代码默认填充。
+- **监控页 Grafana 仪表语义**：仪表环粗细 12px、数值 28px 等宽、面板标题 12px 大写字母间距 0.5px（panel header 风），面板底 `#ffffff` 边框 `#e0e0e0`（亮色）/`#3f3f3f`（暗色）。
+- **导航**：LeetCode 式顶部横向导航——品牌 logo 左侧、题库/提交/监控居中 tab 式（绿色下划线激活态）、用户徽章与暗色切换右侧；≤900px 折为底部 tab。
+- **EP 变量桥**：`--el-color-primary: #26b35c`（LeetCode 绿）统一注入亮/暗两套变量。
 
 ## 开发
 

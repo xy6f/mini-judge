@@ -33,7 +33,7 @@ const model = computed(() => {
 
 <style scoped>
 .spark { width: 100%; height: 120px; display: block; }
-.grid-line { stroke: rgba(255, 255, 255, 0.06); stroke-width: 1; }
-.sq { fill: none; stroke: var(--mj-queued); stroke-width: 2; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.4)); }
-.sr { fill: none; stroke: var(--mj-cyan); stroke-width: 2; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.4)); }
+.grid-line { stroke: var(--mj-border); stroke-width: 1; }
+.sq { fill: none; stroke: var(--mj-queued); stroke-width: 2; stroke-linejoin: round; }
+.sr { fill: none; stroke: var(--mj-ac); stroke-width: 2; stroke-linejoin: round; }
 </style>

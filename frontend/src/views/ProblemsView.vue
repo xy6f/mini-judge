@@ -126,9 +126,9 @@ function gotoProblem(id) {
     </div>
 
     <div class="filter-row">
-      <button v-for="d in DIFFS" :key="d" class="chip" :class="{ active: filter === d }"
+      <button v-for="d in DIFFS" :key="d" class="chip" :class="[{ active: filter === d }, d ? 'diff-' + d.toLowerCase() : '']"
         @click="filter = d; fetchList()">
-        <i v-if="d" class="dot" :class="d.toLowerCase()"></i>{{ d || '全部' }}
+        {{ d || '全部' }}
       </button>
       <button class="chip" title="刷新题单" @click="fetchList">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -137,13 +137,12 @@ function gotoProblem(id) {
       </button>
     </div>
 
-    <div v-loading="loading" class="problem-grid" element-loading-background="rgba(11,16,32,0.4)">
+    <div v-loading="loading" class="problem-grid">
       <div v-for="p in problems" :key="p.id" class="glass card problem-card">
         <div class="pc-head">
-          <i class="dot" :class="p.difficulty.toLowerCase()"></i>
-          <span class="diff-label">{{ p.difficulty }}</span>
-          <span class="pc-title" :title="p.title">{{ p.title }}</span>
           <span class="pc-id mono">#{{ p.id }}</span>
+          <span class="pc-title" :title="p.title">{{ p.title }}</span>
+          <span class="diff-badge" :class="p.difficulty">{{ p.difficulty }}</span>
         </div>
         <p class="pc-desc">{{ p.description }}</p>
         <div class="pc-foot">
@@ -173,9 +172,9 @@ function gotoProblem(id) {
 
 <style scoped>
 .page-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.page-head h2 { margin: 0 0 4px; font-size: 21px; }
+.page-head h2 { margin: 0 0 4px; font-size: 21px; color: var(--mj-text); }
 .page-desc { margin: 0; font-size: 13px; }
-.demo-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; font-size: 13.5px; }
+.demo-btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; font-size: 13.5px; }
 
 .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 
@@ -183,12 +182,11 @@ function gotoProblem(id) {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 14px; min-height: 80px;
 }
-.problem-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s, transform 0.15s; }
-.problem-card:hover { border-color: var(--mj-border-hi); transform: translateY(-2px); }
+.problem-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s, box-shadow 0.15s; }
+.problem-card:hover { border-color: var(--mj-border-strong); box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07); }
 .pc-head { display: flex; align-items: center; gap: 8px; }
-.diff-label { font-family: var(--mj-code-font); font-size: 11px; color: var(--mj-muted); letter-spacing: 0.06em; }
-.pc-title { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pc-id { color: var(--mj-muted); font-size: 12px; }
+.pc-id { color: var(--mj-faint); font-size: 12.5px; }
+.pc-title { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mj-text); }
 .pc-desc { margin: 0; font-size: 13px; color: var(--mj-muted); line-height: 1.55;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .pc-foot { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
@@ -196,10 +194,11 @@ function gotoProblem(id) {
 .mini-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--mj-muted);
   border: 1px solid var(--mj-border); border-radius: 999px; padding: 3px 9px; }
 .pc-go {
-  background: transparent; border: 1px solid var(--mj-border-hi); color: var(--mj-cyan);
-  border-radius: 8px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; transition: all 0.15s;
+  background: transparent; border: 1px solid rgba(38, 179, 92, 0.5); color: var(--mj-ac);
+  border-radius: var(--mj-radius); padding: 5px 12px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
 }
-.pc-go:hover { background: var(--mj-grad-soft); color: #fff; }
+.pc-go:hover { background: rgba(38, 179, 92, 0.1); }
 
 .empty { padding: 46px 30px; text-align: center; margin-top: 4px; }
 .empty p { margin: 6px 0; }

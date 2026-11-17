@@ -1,58 +1,94 @@
 /* ═══════════════════════════════════════════════════════════════════
- * mini-judge 设计令牌 —— 深空玻璃拟态体系（自原生版 app.css 平移升级）
- * 底色 #0b1020；主渐变 violet(#8b5cf6) → cyan(#22d3ee)；
- * 判定徽章体系：AC 绿 / WA 黄 / TLE 红 / CE 灰 / QUEUED 呼吸蓝。
- * 与 Element Plus 暗色 css-vars 并存：EP 组件用 --ep 变量，
- * 本文件负责页面级玻璃卡片、徽章与渐变按钮。
+ * mini-judge 设计令牌 v3 —— OJ 专业风（对标 LeetCode 中文版 + Codeforces）
+ * 亮色为主：页面底 #f6f7f8，内容白卡片 #ffffff + 1px #e8e8e8 边 + 4px 圆角；
+ * 暗色保留（html.dark，顶栏月亮/太阳切换）：底 #1a1a1a / 卡片 #2a2a2a。
+ * 难度色严格对齐 LeetCode：Easy #26b35c / Medium #ffb800 / Hard #ef4646；
+ * 判定徽章对齐 OJ 惯例：AC 绿底白字，WA/TLE/RE/CE 灰底彩字，QUEUED 转圈。
+ * EP 变量桥：--el-color-primary 统一为 LeetCode 绿 #26b35c。
  * ═══════════════════════════════════════════════════════════════════ */
 :root {
-  --mj-bg: #0b1020;
-  --mj-bg-deep: #070b18;
-  --mj-panel: rgba(255, 255, 255, 0.045);
-  --mj-panel-strong: rgba(255, 255, 255, 0.08);
-  --mj-border: rgba(255, 255, 255, 0.09);
-  --mj-border-hi: rgba(139, 92, 246, 0.45);
-  --mj-text: #e6e9f2;
-  --mj-muted: #8a93ad;
-  --mj-violet: #8b5cf6;
-  --mj-cyan: #22d3ee;
-  --mj-grad: linear-gradient(135deg, #8b5cf6, #22d3ee);
-  --mj-grad-soft: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(34, 211, 238, 0.12));
+  /* ── 亮色（LeetCode 经典亮色）── */
+  --mj-bg: #f6f7f8;
+  --mj-card: #ffffff;
+  --mj-card-head: #fafafa;
+  --mj-border: #e8e8e8;
+  --mj-border-strong: #d0d0d0;
+  --mj-text: #1a1a1a;
+  --mj-muted: #565656;
+  --mj-faint: #9aa0a6;
+  --mj-hover-bg: #f0f1f3;
 
-  /* 判定徽章色板 */
-  --mj-ac: #34d399;
-  --mj-wa: #fbbf24;
-  --mj-tle: #f87171;
-  --mj-ce: #9aa3b8;
-  --mj-re: #f472b6;
-  --mj-queued: #60a5fa;
-  --mj-running: #22d3ee;
+  /* ── LeetCode 难度色 ── */
+  --mj-easy: #26b35c;
+  --mj-medium: #ffb800;
+  --mj-hard: #ef4646;
 
-  --mj-radius: 12px;
-  --mj-shadow: 0 10px 30px rgba(2, 6, 23, 0.55);
+  /* ── 判定徽章色板 ── */
+  --mj-ac: #26b35c;
+  --mj-wa: #ffb800;
+  --mj-tle: #ef4646;
+  --mj-ce: #7d8590;
+  --mj-re: #ef4646;
+  --mj-queued: #007aff;
+  --mj-running: #007aff;
+  --mj-info: #007aff;
+
+  /* 徽章灰底（OJ 惯例：非 AC 徽章灰底彩字） */
+  --mj-badge-gray-bg: #ebebeb;
+  --mj-badge-gray-bg-dark: #3a3a3a;
+
+  --mj-radius: 4px;              /* LeetCode 紧凑卡片圆角 */
+  --mj-radius-lg: 8px;
+  --mj-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --mj-shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.12);
   --mj-code-font: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
-  --mj-line-h: 22px;
+  --mj-line-h: 20px;
+
+  /* ── Element Plus 变量桥（亮色）：LeetCode 绿为主色 ── */
+  --el-color-primary: #26b35c;
+  --el-color-primary-light-3: #6ecb90;
+  --el-color-primary-light-5: #93dba9;
+  --el-color-primary-light-7: #bfeac9;
+  --el-color-primary-light-8: #d9f2e0;
+  --el-color-primary-light-9: #ecf9ef;
+  --el-color-primary-dark-2: #1e944c;
+  --el-border-radius-base: 4px;
+  --el-font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }
 
+/* ── 暗色（保留切换）：LeetCode 暗色观感 ── */
 html.dark {
-  /* 让 Element Plus 暗色变量贴合深空底色 */
-  --el-bg-color: var(--mj-bg);
+  --mj-bg: #1a1a1a;
+  --mj-card: #2a2a2a;
+  --mj-card-head: #232323;
+  --mj-border: #3f3f3f;
+  --mj-border-strong: #4d4d4d;
+  --mj-text: #e8e8e8;
+  --mj-muted: #a3a3a3;
+  --mj-faint: #7d7d7d;
+  --mj-hover-bg: #333333;
+
+  --mj-badge-gray-bg: #3a3a3a;
+
+  /* EP 暗色桥 */
+  --el-bg-color: var(--mj-card);
   --el-bg-color-page: var(--mj-bg);
-  --el-bg-color-overlay: #131a2e;
+  --el-bg-color-overlay: #333333;
   --el-text-color-primary: var(--mj-text);
-  --el-text-color-regular: #c3cadd;
+  --el-text-color-regular: #d0d0d0;
   --el-text-color-secondary: var(--mj-muted);
   --el-border-color: var(--mj-border);
   --el-border-color-light: var(--mj-border);
   --el-border-color-lighter: var(--mj-border);
-  --el-fill-color-blank: transparent;
-  --el-color-primary: var(--mj-violet);
-  --el-color-primary-light-3: #a78bfa;
-  --el-color-primary-light-5: #bda4fc;
-  --el-color-primary-light-7: #d4c5fd;
-  --el-color-primary-light-8: #e2d8fe;
-  --el-color-primary-light-9: #efe8fe;
-  --el-mask-color: rgba(7, 11, 24, 0.6);
+  --el-fill-color-blank: var(--mj-card);
+  --el-color-primary: #26b35c;
+  --el-color-primary-light-3: #4cc27a;
+  --el-color-primary-light-5: #35b966;
+  --el-color-primary-light-7: #2aa858;
+  --el-color-primary-light-8: #269b51;
+  --el-color-primary-light-9: #1f4d31;
+  --el-color-primary-dark-2: #1e944c;
+  --el-mask-color: rgba(0, 0, 0, 0.6);
 }
 
 * { box-sizing: border-box; }
@@ -63,51 +99,50 @@ body {
   margin: 0;
   font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   color: var(--mj-text);
-  background:
-    radial-gradient(1100px 500px at 85% -10%, rgba(139, 92, 246, 0.16), transparent 60%),
-    radial-gradient(900px 480px at -10% 100%, rgba(34, 211, 238, 0.10), transparent 55%),
-    var(--mj-bg);
-  background-attachment: fixed;
+  background: var(--mj-bg);
   font-size: 14px;
+  transition: background 0.2s, color 0.2s;
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.28); border-radius: 6px; }
+::-webkit-scrollbar-thumb { background: #c4c7cc; border-radius: 6px; border: 2px solid transparent; background-clip: content-box; }
 ::-webkit-scrollbar-track { background: transparent; }
+html.dark ::-webkit-scrollbar-thumb { background: #4d4d4d; border: 2px solid transparent; background-clip: content-box; }
 
 .mono { font-family: var(--mj-code-font); }
 .muted { color: var(--mj-muted); }
 
-/* ── 玻璃卡片 ── */
+/* ── 卡片（LeetCode 紧凑白卡：#ffffff + 1px #e8e8e8 + 4px 圆角）── */
 .glass {
-  background: var(--mj-panel);
+  background: var(--mj-card);
   border: 1px solid var(--mj-border);
   border-radius: var(--mj-radius);
   box-shadow: var(--mj-shadow);
-  backdrop-filter: blur(14px);
 }
+html.dark .glass { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
 
-/* ── 渐变主按钮（EP 按钮之外的自定义 CTA） ── */
+/* ── 主按钮（LeetCode 绿实心）── */
 .btn-gradient {
   border: none;
   color: #fff;
-  background: var(--mj-grad);
-  border-radius: 10px;
+  background: var(--mj-ac);
+  border-radius: var(--mj-radius);
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
-  transition: filter 0.15s, transform 0.15s;
+  font-weight: 600;
+  transition: background 0.15s;
 }
-.btn-gradient:hover { filter: brightness(1.12); }
-.btn-gradient:active { transform: translateY(1px); }
-.btn-gradient:disabled { filter: grayscale(0.5) brightness(0.7); cursor: not-allowed; }
+.btn-gradient:hover { background: #22a052; }
+.btn-gradient:active { background: #1e944c; }
+.btn-gradient:disabled { background: #a8dcb9; cursor: not-allowed; }
+html.dark .btn-gradient:disabled { background: #2a5c3c; }
 
-/* ── 过滤芯片 ── */
+/* ── 过滤芯片：难度 chips 用同色系 10% 浅底 + 深色字（LC 风格）── */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  background: var(--mj-panel);
+  padding: 5px 14px;
+  background: var(--mj-card);
   border: 1px solid var(--mj-border);
   border-radius: 999px;
   font-size: 13px;
@@ -116,112 +151,150 @@ body {
   transition: all 0.15s;
   user-select: none;
 }
-.chip:hover { color: var(--mj-text); border-color: var(--mj-border-hi); }
-.chip.active { color: #fff; background: rgba(139, 92, 246, 0.22); border-color: var(--mj-border-hi); }
+.chip:hover { color: var(--mj-text); border-color: var(--mj-border-strong); background: var(--mj-hover-bg); }
+.chip.active { color: var(--mj-text); background: var(--mj-text); border-color: var(--mj-text); }
+html.dark .chip.active { color: #1a1a1a; background: var(--mj-text); }
+/* 难度筛选 chip 激活态：10% 难度色浅底 + 难度色深字 */
+.chip.diff-easy.active   { color: var(--mj-easy);   background: rgba(38, 179, 92, 0.1);   border-color: var(--mj-easy); }
+.chip.diff-medium.active { color: #c78e00;          background: rgba(255, 184, 0, 0.1);   border-color: var(--mj-medium); }
+.chip.diff-hard.active   { color: var(--mj-hard);   background: rgba(239, 70, 70, 0.1);   border-color: var(--mj-hard); }
 
-/* ── 难度圆点 ── */
+/* ── 难度文字徽章（不用圆点，LeetCode 文字徽章风）── */
+.diff-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.diff-badge.EASY,
+.diff-badge.easy   { color: var(--mj-easy);   background: rgba(38, 179, 92, 0.1); }
+.diff-badge.MEDIUM,
+.diff-badge.medium { color: #c78e00;          background: rgba(255, 184, 0, 0.1); }
+.diff-badge.HARD,
+.diff-badge.hard   { color: var(--mj-hard);   background: rgba(239, 70, 70, 0.1); }
+/* 兼容旧 .dot 引用（若有遗留）*/
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.dot.easy   { background: var(--mj-ac);   box-shadow: 0 0 8px var(--mj-ac); }
-.dot.medium { background: var(--mj-wa);   box-shadow: 0 0 8px var(--mj-wa); }
-.dot.hard   { background: var(--mj-tle);  box-shadow: 0 0 8px var(--mj-tle); }
+.dot.easy { background: var(--mj-easy); }
+.dot.medium { background: var(--mj-medium); }
+.dot.hard { background: var(--mj-hard); }
 
-/* ── 判定 / 状态徽章体系 ── */
+/* ── 判定 / 状态徽章体系（OJ 惯例）──
+ * AC：绿底白字圆角；WA/TLE/RE/CE：灰底彩字；QUEUED：转圈图标 + 文字 */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 2px 10px;
-  border-radius: 999px;
+  border-radius: var(--mj-radius-lg);
   font-family: var(--mj-code-font);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
   border: 1px solid transparent;
   white-space: nowrap;
 }
-.badge.AC       { color: var(--mj-ac);      background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.4); }
-.badge.WA       { color: var(--mj-wa);      background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.4); }
-.badge.TLE      { color: var(--mj-tle);     background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); }
-.badge.MLE      { color: var(--mj-tle);     background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); }
-.badge.RE       { color: var(--mj-re);      background: rgba(244, 114, 182, 0.12); border-color: rgba(244, 114, 182, 0.4); }
-.badge.CE       { color: var(--mj-ce);      background: rgba(154, 163, 184, 0.12); border-color: rgba(154, 163, 184, 0.4); }
-.badge.DONE     { color: var(--mj-ce);      background: rgba(154, 163, 184, 0.12); border-color: rgba(154, 163, 184, 0.4); }
-.badge.RUNNING  { color: var(--mj-running); background: rgba(34, 211, 238, 0.12);  border-color: rgba(34, 211, 238, 0.4); }
-/* QUEUED：呼吸蓝 —— 蓝色光晕缓慢起伏，暗示"在队列里排队等位" */
+/* AC：绿底白字 */
+.badge.AC { color: #fff; background: var(--mj-ac); border-color: var(--mj-ac); }
+/* 非 AC：灰底彩字 */
+.badge.WA  { color: #c78e00; background: var(--mj-badge-gray-bg); border-color: var(--mj-badge-gray-bg); }
+.badge.TLE,
+.badge.MLE { color: var(--mj-tle); background: var(--mj-badge-gray-bg); border-color: var(--mj-badge-gray-bg); }
+.badge.RE  { color: var(--mj-tle); background: var(--mj-badge-gray-bg); border-color: var(--mj-badge-gray-bg); }
+.badge.CE  { color: #6e7681; background: var(--mj-badge-gray-bg); border-color: var(--mj-badge-gray-bg); }
+.badge.DONE { color: var(--mj-muted); background: var(--mj-badge-gray-bg); border-color: var(--mj-badge-gray-bg); }
+.badge.RUNNING { color: var(--mj-running); background: var(--mj-badge-gray-bg); border-color: var(--mj-badge-gray-bg); }
+/* QUEUED：转圈图标 + 文字 */
 .badge.QUEUED {
   color: var(--mj-queued);
-  background: rgba(96, 165, 250, 0.12);
-  border-color: rgba(96, 165, 250, 0.4);
-  animation: mj-breathe 1.8s ease-in-out infinite;
+  background: var(--mj-badge-gray-bg);
+  border-color: var(--mj-badge-gray-bg);
 }
-@keyframes mj-breathe {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.35); opacity: 0.82; }
-  50%      { box-shadow: 0 0 12px 3px rgba(96, 165, 250, 0.45); opacity: 1; }
+.badge.QUEUED::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border: 2px solid var(--mj-queued);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: mj-spin 0.8s linear infinite;
 }
+@keyframes mj-spin { to { transform: rotate(360deg); } }
 
-/* 完成判定大徽章 */
+/* 完成判定大徽章：0.6s 缩放入场 */
 .big-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
+  min-width: 84px;
+  height: 46px;
+  padding: 0 18px;
+  border-radius: var(--mj-radius-lg);
   font-family: var(--mj-code-font);
   font-size: 22px;
   font-weight: 700;
-  border: 2px solid var(--mj-ce);
-  color: var(--mj-ce);
-  background: var(--mj-panel);
-  animation: mj-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--mj-ce);
+  animation: mj-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.big-badge.AC  { border-color: var(--mj-ac);  color: var(--mj-ac);  box-shadow: 0 0 28px rgba(52, 211, 153, 0.35); }
-.big-badge.WA  { border-color: var(--mj-wa);  color: var(--mj-wa);  box-shadow: 0 0 28px rgba(251, 191, 36, 0.3); }
+.big-badge.AC { background: var(--mj-ac); box-shadow: 0 2px 10px rgba(38, 179, 92, 0.35); }
+.big-badge.WA { background: var(--mj-wa); color: #4d3800; box-shadow: 0 2px 10px rgba(255, 184, 0, 0.3); }
 .big-badge.TLE,
-.big-badge.MLE { border-color: var(--mj-tle); color: var(--mj-tle); box-shadow: 0 0 28px rgba(248, 113, 113, 0.3); }
-.big-badge.RE  { border-color: var(--mj-re);  color: var(--mj-re);  box-shadow: 0 0 28px rgba(244, 114, 182, 0.3); }
-.big-badge.CE  { border-color: var(--mj-ce);  color: var(--mj-ce); }
+.big-badge.MLE,
+.big-badge.RE { background: var(--mj-tle); box-shadow: 0 2px 10px rgba(239, 70, 70, 0.3); }
+.big-badge.CE, .big-badge.DONE { background: #8a919c; }
 @keyframes mj-pop {
-  0% { transform: scale(0.4); opacity: 0; }
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
 
 /* LIVE 呼吸点 */
-.live-dot { display: inline-flex; align-items: center; gap: 7px; color: var(--mj-ac); font-size: 12px; letter-spacing: 0.1em; }
+.live-dot { display: inline-flex; align-items: center; gap: 7px; color: var(--mj-ac); font-size: 12px; letter-spacing: 0.1em; font-weight: 600; }
 .live-dot i { width: 8px; height: 8px; border-radius: 50%; background: var(--mj-ac); animation: mj-breathe-green 1.6s ease-in-out infinite; }
 @keyframes mj-breathe-green {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
-  50% { box-shadow: 0 0 10px 3px rgba(52, 211, 153, 0.5); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(38, 179, 92, 0.4); }
+  50% { box-shadow: 0 0 8px 3px rgba(38, 179, 92, 0.45); }
 }
 
 /* 数字变化闪烁 */
 .flash { animation: mj-flash 0.5s ease; }
 @keyframes mj-flash {
-  0% { color: var(--mj-cyan); text-shadow: 0 0 14px rgba(34, 211, 238, 0.8); }
-  100% { color: inherit; text-shadow: none; }
+  0% { color: var(--mj-info); }
+  100% { color: inherit; }
 }
 
-/* ── Element Plus 局部适配（覆盖到我们的暗色玻璃风格） ── */
-.el-drawer { background: #10162b !important; }
+/* ── Element Plus 局部适配 ── */
+.el-drawer { background: var(--mj-card) !important; }
 .el-table {
   --el-table-border-color: var(--mj-border);
-  --el-table-bg-color: transparent;
-  --el-table-tr-bg-color: transparent;
-  --el-table-header-bg-color: rgba(139, 92, 246, 0.08);
-  --el-table-row-hover-bg-color: rgba(139, 92, 246, 0.12);
-  background: transparent !important;
+  --el-table-bg-color: var(--mj-card);
+  --el-table-tr-bg-color: var(--mj-card);
+  --el-table-header-bg-color: var(--mj-card-head);
+  --el-table-header-text-color: var(--mj-muted);
+  --el-table-row-hover-bg-color: var(--mj-hover-bg);
 }
-.el-table th.el-table__cell, .el-table td.el-table__cell { background: transparent !important; }
-.el-table__empty-block { background: transparent !important; }
 .el-select__wrapper, .el-input__wrapper {
-  background: var(--mj-panel) !important;
-  box-shadow: 0 0 0 1px var(--mj-border) inset !important;
+  background: var(--mj-card) !important;
+  box-shadow: 0 0 0 1px var(--mj-border-strong) inset !important;
+}
+.el-select__wrapper.is-hovering:not(.is-focused), .el-input__wrapper.is-hovering {
+  box-shadow: 0 0 0 1px var(--mj-faint) inset !important;
 }
 .el-select__wrapper.is-focused, .el-input__wrapper.is-focus {
-  box-shadow: 0 0 0 1px var(--mj-border-hi) inset, 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+  box-shadow: 0 0 0 1px var(--mj-ac) inset !important;
 }
 .el-popover.el-popper {
-  background: #131a2e;
-  border: 1px solid var(--mj-border-hi);
-  box-shadow: var(--mj-shadow);
+  background: var(--mj-card);
+  border: 1px solid var(--mj-border);
+  box-shadow: var(--mj-shadow-pop);
 }
+/* loading 遮罩跟随主题 */
+.el-loading-mask { background-color: rgba(246, 247, 248, 0.7) !important; }
+html.dark .el-loading-mask { background-color: rgba(26, 26, 26, 0.7) !important; }

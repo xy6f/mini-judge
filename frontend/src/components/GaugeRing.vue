@@ -29,19 +29,19 @@ const cls = computed(() => {
 </template>
 
 <style scoped>
+/* Grafana 仪表语义：环粗 12px、中心数值 28px 等宽 */
 .gauge { position: relative; width: 140px; height: 140px; }
 .gauge-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.gauge-bg { fill: none; stroke: rgba(255, 255, 255, 0.07); stroke-width: 10; }
+.gauge-bg { fill: none; stroke: var(--mj-hover-bg); stroke-width: 12; }
 .gauge-val {
-  fill: none; stroke: var(--mj-cyan); stroke-width: 10; stroke-linecap: round;
+  fill: none; stroke: var(--mj-info); stroke-width: 12; stroke-linecap: round;
   transition: stroke-dashoffset 0.6s ease, stroke 0.3s;
-  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.5));
 }
-.gauge-val.hot { stroke: var(--mj-wa); filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5)); }
-.gauge-val.full { stroke: var(--mj-tle); filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.6)); }
+.gauge-val.hot { stroke: var(--mj-wa); }
+.gauge-val.full { stroke: var(--mj-tle); }
 .gauge-text {
   position: absolute; inset: 0; display: flex; align-items: baseline; justify-content: center;
-  font-size: 26px;
+  font-size: 28px; font-weight: 600;
 }
 .gauge-text b { color: var(--mj-text); }
 </style>

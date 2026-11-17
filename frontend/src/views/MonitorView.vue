@@ -102,7 +102,7 @@ watch(() => auth.loggedIn, syncPolling);
 
     <div v-if="auth.loggedIn" class="glass spark-card">
       <div class="card-head">
-        <h3>队列采样曲线</h3>
+        <h3 class="panel-title">队列采样曲线 · Queue Samples</h3>
         <span class="legend"><i class="lg lg-q"></i>排队</span>
         <span class="legend"><i class="lg lg-r"></i>评测中</span>
       </div>
@@ -113,10 +113,12 @@ watch(() => auth.loggedIn, syncPolling);
 </template>
 
 <style scoped>
+/* Grafana panel header 风格：12px 大写字母间距 0.5px */
+.panel-title { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--mj-muted); }
 .page-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.page-head h2 { margin: 0 0 4px; font-size: 21px; }
+.page-head h2 { margin: 0 0 4px; font-size: 21px; color: var(--mj-text); }
 .page-desc { margin: 0; font-size: 13px; }
-.page-desc code { color: var(--mj-cyan); font-size: 12px; }
+.page-desc code { color: var(--mj-ac); font-size: 12px; }
 
 .metric-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; margin-bottom: 14px; }
 
@@ -125,18 +127,17 @@ watch(() => auth.loggedIn, syncPolling);
 .login-cta { margin-top: 14px; padding: 9px 22px; font-size: 13.5px; color: #fff; }
 @media (max-width: 900px) { .metric-row { grid-template-columns: 1fr; } }
 .metric { padding: 18px 22px; }
-.metric-label { margin: 0 0 6px; font-size: 12px; letter-spacing: 0.08em; color: var(--mj-muted); }
-.metric-num { margin: 0; font-size: 46px; font-weight: 700; line-height: 1.1;
-  background: var(--mj-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.metric-label { margin: 0 0 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--mj-muted); }
+/* Grafana 语义：大数值 28px 等宽 */
+.metric-num { margin: 0; font-size: 28px; font-weight: 600; line-height: 1.2; color: var(--mj-text); }
 .metric-num.flash { animation: mj-flash 0.5s ease; }
-.gauge-card { display: flex; flex-direction: column; align-items: center; }
+.gauge-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
 
 .spark-card { padding: 16px 18px; }
 .card-head { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; }
-.card-head h3 { margin: 0; font-size: 14.5px; }
 .legend { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--mj-muted); }
 .lg { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
 .lg-q { background: var(--mj-queued); }
-.lg-r { background: var(--mj-cyan); }
+.lg-r { background: var(--mj-ac); }
 .tip { font-size: 11.5px; margin: 8px 0 0; }
 </style>

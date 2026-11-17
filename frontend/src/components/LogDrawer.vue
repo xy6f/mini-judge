@@ -44,13 +44,13 @@ const logs = useLogsStore();
 .drawer-ops { display: flex; gap: 8px; }
 .center { text-align: center; padding: 30px 0; }
 .log-entry {
-  border: 1px solid var(--mj-border); border-radius: 10px;
+  border: 1px solid var(--mj-border); border-radius: var(--mj-radius);
   padding: 9px 12px; margin-bottom: 9px; font-size: 12.5px;
-  background: var(--mj-panel);
+  background: var(--mj-card);
 }
-.log-entry.fail { border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.06); }
+.log-entry.fail { border-color: rgba(239, 70, 70, 0.4); background: rgba(239, 70, 70, 0.05); }
 .le-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
-.le-method { color: var(--mj-violet); font-weight: 700; margin-right: 6px; }
+.le-method { color: var(--mj-info); font-weight: 700; margin-right: 6px; }
 .le-path { color: var(--mj-text); word-break: break-all; }
 .le-ok { color: var(--mj-ac); margin-left: 6px; }
 .le-bad { color: var(--mj-tle); margin-left: 6px; }

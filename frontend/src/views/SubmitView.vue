@@ -172,13 +172,9 @@ watch(() => auth.token, () => { loadProblems(auth.token).catch(() => {}); loadHi
   <section class="page">
     <div class="submit-grid">
 
-      <!-- ══ 左：编辑器卡片 ══ -->
+      <!-- ══ 左：编辑器卡片（LeetCode 风格：语言选择条 + 分割线 + 代码区） ══ -->
       <div class="glass card editor-card">
-        <div class="card-head">
-          <h3>代码编辑</h3>
-          <span class="muted mono meta">{{ charCount }} 字符</span>
-        </div>
-        <div class="editor-tools">
+        <div class="lc-toolbar">
           <el-select v-model="problemId" placeholder="选择题目" class="tool-select">
             <el-option v-for="p in problems" :key="p.id" :label="`#${p.id} ${p.title}`" :value="p.id" />
             <template #empty><p class="sel-empty">（暂无题目，先去题库页一键初始化）</p></template>
@@ -186,7 +182,9 @@ watch(() => auth.token, () => { loadProblems(auth.token).catch(() => {}); loadHi
           <el-select v-model="language" class="tool-select narrow">
             <el-option label="Java 17" value="JAVA17" />
           </el-select>
+          <span class="muted mono meta">{{ charCount }} 字符</span>
         </div>
+        <div class="lc-divider"></div>
         <div class="sample-row">
           <span class="sample-label muted">示例代码：</span>
           <button class="chip tiny" @click="loadSample('ac')">正确解 → AC</button>
@@ -292,54 +290,64 @@ watch(() => auth.token, () => { loadProblems(auth.token).catch(() => {}); loadHi
 .submit-grid { display: grid; grid-template-columns: minmax(420px, 1.25fr) minmax(360px, 1fr); gap: 14px; align-items: start; }
 @media (max-width: 1100px) { .submit-grid { grid-template-columns: 1fr; } }
 
-.card { padding: 16px; }
-.card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.card-head h3 { margin: 0; font-size: 14.5px; }
+.card { padding: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 14px 16px 0; }
+.card-head h3 { margin: 0; font-size: 14.5px; color: var(--mj-text); }
 .meta { font-size: 12px; }
 .tip { font-size: 11.5px; margin: 8px 0 0; }
 
-.editor-tools { display: flex; gap: 10px; margin-bottom: 10px; }
-.tool-select { flex: 1; }
-.tool-select.narrow { flex: 0 0 120px; }
+/* ── LeetCode 工具条：语言选择条 + 分割线 ── */
+.lc-toolbar {
+  display: flex; gap: 10px; align-items: center;
+  padding: 12px 16px;
+  background: var(--mj-card-head);
+  border-bottom: 1px solid var(--mj-border);
+  border-radius: var(--mj-radius) var(--mj-radius) 0 0;
+}
+.lc-toolbar .meta { margin-left: auto; }
+.tool-select { flex: 1; max-width: 320px; }
+.tool-select.narrow { flex: 0 0 130px; }
 .sel-empty { padding: 10px; font-size: 12.5px; color: var(--mj-muted); text-align: center; }
+.lc-divider { height: 1px; background: var(--mj-border); }
 
-.sample-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.editor-body { padding: 14px 16px; }
+.sample-row { display: flex; align-items: center; gap: 8px; margin: 14px 16px 10px; flex-wrap: wrap; }
 .sample-label { font-size: 12.5px; }
 .chip.tiny { padding: 3px 10px; font-size: 11.5px; }
 
-/* ── 高仿编辑器：textarea + 行号槽，聚焦发光，无任何重依赖 ── */
+/* ── 高仿编辑器：textarea + 行号槽（LeetCode 风格：白底、行号 #adb5bd、13px/20px 等宽）── */
 .editor {
-  display: flex; position: relative; height: 320px; overflow: hidden;
-  border: 1px solid var(--mj-border); border-radius: 10px;
-  background: rgba(2, 6, 23, 0.55);
+  display: flex; position: relative; height: 320px; overflow: hidden; margin: 0 16px;
+  border: 1px solid var(--mj-border); border-radius: var(--mj-radius);
+  background: var(--mj-card);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .editor:focus-within {
-  border-color: var(--mj-border-hi);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.16), 0 0 24px rgba(34, 211, 238, 0.10);
+  border-color: var(--mj-ac);
+  box-shadow: 0 0 0 2px rgba(38, 179, 92, 0.15);
 }
 .line-gutter {
   flex: 0 0 44px; padding: 12px 0; text-align: right; user-select: none; pointer-events: none;
-  color: rgba(138, 147, 173, 0.55); font-size: 13px; line-height: var(--mj-line-h);
-  border-right: 1px solid var(--mj-border); background: rgba(255, 255, 255, 0.02);
+  color: #adb5bd; font-size: 13px; line-height: var(--mj-line-h);
+  border-right: 1px solid var(--mj-border); background: var(--mj-card-head);
   position: relative; z-index: 1;
 }
 .line-gutter div { padding-right: 10px; height: var(--mj-line-h); }
 .code-area {
   flex: 1; padding: 12px 14px; border: none; outline: none; resize: none; background: transparent;
-  color: #dbe3f5; caret-color: var(--mj-cyan);
+  color: var(--mj-text); caret-color: var(--mj-ac);
   font-size: 13px; line-height: var(--mj-line-h); tab-size: 4;
   white-space: pre; overflow: auto;
 }
-.code-area::placeholder { color: rgba(138, 147, 173, 0.45); }
+.code-area::placeholder { color: #adb5bd; }
 
-.editor-foot { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
-.submit-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 26px; font-size: 14px; }
+.editor-foot { display: flex; align-items: center; gap: 14px; margin: 14px 16px 16px; }
+.submit-btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 26px; font-size: 14px; }
 
 .result-col { display: flex; flex-direction: column; gap: 14px; }
 
 /* ── 时间线状态机 ── */
-.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline { list-style: none; margin: 0; padding: 0 16px 6px; }
 .timeline li { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; position: relative; }
 .timeline li::before {  /* 竖线 */
   content: ''; position: absolute; left: 7px; top: 30px; bottom: -9px; width: 2px;
@@ -352,29 +360,31 @@ watch(() => auth.token, () => { loadProblems(auth.token).catch(() => {}); loadHi
 }
 .tl-text b { display: block; font-family: var(--mj-code-font); font-size: 13px; color: var(--mj-muted); transition: color 0.25s; }
 .tl-text span { font-size: 12px; }
-/* 已完成：渐变实心点 */
-.timeline li.done .tl-dot { border-color: var(--mj-cyan); background: var(--mj-grad); box-shadow: 0 0 10px rgba(34, 211, 238, 0.4); }
+/* 已完成：实心绿点 */
+.timeline li.done .tl-dot { border-color: var(--mj-ac); background: var(--mj-ac); }
 .timeline li.done .tl-text b { color: var(--mj-text); }
-/* 进行中：呼吸蓝；RUNNING 时转 cyan */
-.timeline li.active .tl-dot { border-color: var(--mj-queued); background: var(--mj-queued); animation: mj-breathe 1.8s ease-in-out infinite; }
-.timeline li.active.run .tl-dot { border-color: var(--mj-cyan); background: var(--mj-cyan); box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.18); animation: mj-spin-dot 1.1s linear infinite; }
-.timeline li.active .tl-text b { color: #fff; }
+/* 进行中：蓝色脉冲；RUNNING 时呼吸扩散 */
+.timeline li.active .tl-dot { border-color: var(--mj-queued); background: var(--mj-queued); box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.35); animation: mj-spin-dot 1.4s ease-out infinite; }
+.timeline li.active.run .tl-dot { border-color: var(--mj-info); background: var(--mj-info); animation: mj-spin-dot 1.1s ease-out infinite; }
+.timeline li.active .tl-text b { color: var(--mj-text); font-weight: 700; }
 @keyframes mj-spin-dot {
-  0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.35); }
-  50% { box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.12); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.35); }
+  0% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.35); }
+  70% { box-shadow: 0 0 0 6px rgba(0, 122, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0); }
 }
 
-.result-panel { margin-top: 14px; border-top: 1px dashed var(--mj-border); padding-top: 14px; }
+.result-panel { margin: 14px 16px 16px; border-top: 1px dashed var(--mj-border); padding-top: 14px; }
 .verdict-row { display: flex; align-items: center; gap: 18px; }
 .verdict-stats p { margin: 3px 0; font-size: 13px; }
-.stat-num { font-size: 20px; color: var(--mj-cyan); }
+.stat-num { font-size: 20px; color: var(--mj-ac); }
 .err-box {
-  margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; font-size: 12px; line-height: 1.5;
-  background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.3);
-  color: #fca5a5; white-space: pre-wrap; word-break: break-all; max-height: 180px; overflow: auto;
+  margin: 12px 0 0; padding: 10px 12px; border-radius: var(--mj-radius); font-size: 12px; line-height: 1.5;
+  background: rgba(239, 70, 70, 0.06); border: 1px solid rgba(239, 70, 70, 0.3);
+  color: var(--mj-tle); white-space: pre-wrap; word-break: break-all; max-height: 180px; overflow: auto;
 }
 
 .history-card :deep(.el-table__row) { cursor: pointer; }
 .hist-table { width: 100%; }
+.history-card .tip { padding: 0 16px 12px; }
+.history-card :deep(.el-table) { border-top: 1px solid var(--mj-border); }
 </style>
