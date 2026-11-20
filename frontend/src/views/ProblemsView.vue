@@ -47,7 +47,7 @@ async function initDemoProblem() {
     try {
       await http.post('/api/auth/register', {
         username: 'demo', password: 'demo123456', nickname: '演示账号',
-        adminBootstrapKey: 'mini-judge-demo-admin-key-2026',
+        adminBootstrapKey: 'demo-only-change-me',
       });
     } catch (e) {
       if (e.code !== 40901 && e.http !== 409) throw e;
